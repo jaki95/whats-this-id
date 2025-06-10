@@ -2,8 +2,8 @@ from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task, tool
 
-from whats_this_id.core.search.tracklist import Tracklist
-from whats_this_id.tracklist_search.tools.find_tracklist import FindTracklist
+from whats_this_id.core.models.tracklist import Tracklist
+from whats_this_id.agents.tracklist_finder.tools.find_tracklist import FindTracklist
 
 
 @CrewBase

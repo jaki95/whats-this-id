@@ -2,7 +2,7 @@ from crawl4ai import (
     AsyncWebCrawler,
 )
 
-from whats_this_id.core.scrape.config import browser_config, crawler_config
+from whats_this_id.core.scraping.config import browser_config, crawler_config
 
 
 async def extract_tracklist(url: str) -> str:

@@ -4,8 +4,8 @@ from typing import Type
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from whats_this_id.core.scrape.google import extract_google_search_links
-from whats_this_id.core.scrape.tracklist import extract_tracklist
+from whats_this_id.core.scraping.google import extract_google_search_links
+from whats_this_id.core.scraping.tracklist import extract_tracklist
 
 
 class FindTracklistInput(BaseModel):

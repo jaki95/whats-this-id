@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from whats_this_id.core.scrape.google import extract_google_search_links
+from whats_this_id.core.scraping.google import extract_google_search_links
 
 from sclib import SoundcloudAPI
 

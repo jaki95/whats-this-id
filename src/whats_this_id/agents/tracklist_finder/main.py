@@ -3,7 +3,7 @@ import sys
 import warnings
 from datetime import datetime
 
-from whats_this_id.tracklist_search.crew import TracklistSearchCrew
+from whats_this_id.agents.tracklist_finder.crew import TracklistSearchCrew
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 

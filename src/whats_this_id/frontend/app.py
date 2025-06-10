@@ -1,8 +1,8 @@
 import pandas as pd
 import streamlit as st
 
-from whats_this_id.tracklist_search.crew import TracklistSearchCrew
-from whats_this_id.core.search.tracklist import Tracklist
+from whats_this_id.agents import TracklistSearchCrew
+from whats_this_id.core.models.tracklist import Tracklist
 
 # Page configuration
 st.set_page_config(

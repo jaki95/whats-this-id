@@ -8,7 +8,7 @@ from crawl4ai import (
 )
 from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 
-from whats_this_id.core.scrape.config import browser_config
+from whats_this_id.core.scraping.config import browser_config
 
 
 async def extract_google_search_links(website: str, query: str):
