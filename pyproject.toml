@@ -1,0 +1,31 @@
+[project]
+name = "whats_this_id"
+version = "0.1.0"
+description = "find dj set ids"
+authors = [{ name = "Jacopo Carrani", email = "jacopocarrani@gmail.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crawl4ai>=0.6.3",
+    "crewai-tools>=0.46.0",
+    "crewai[tools]>=0.126.0,<1.0.0",
+]
+
+[project.scripts]
+whats_this_id = "whats_this_id.main:run"
+run_crew = "whats_this_id.main:run"
+train = "whats_this_id.main:train"
+replay = "whats_this_id.main:replay"
+test = "whats_this_id.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
+
+[dependency-groups]
+dev = [
+    "isort>=6.0.1",
+    "ruff>=0.11.13",
+]

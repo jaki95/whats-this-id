@@ -1,0 +1,9 @@
+tracklist_search_task:
+  description: >
+    Find the tracklist for the dj set {dj_set}
+  expected_output: >
+    A structured tracklist of the dj set. 
+    You must use the following websites to find the tracklist:
+    - 1001tracklists.com
+    - trackid.net
+  agent: tracklist_finder
