@@ -8,14 +8,10 @@ dependencies = [
     "crawl4ai>=0.6.3",
     "crewai-tools>=0.46.0",
     "crewai[tools]>=0.126.0,<1.0.0",
+    "ffmpeg>=1.4",
+    "soundcloud-lib>=0.6.1",
+    "streamlit>=1.45.1",
 ]
-
-[project.scripts]
-whats_this_id = "whats_this_id.main:run"
-run_crew = "whats_this_id.main:run"
-train = "whats_this_id.main:train"
-replay = "whats_this_id.main:replay"
-test = "whats_this_id.main:test"
 
 [build-system]
 requires = ["hatchling"]
@@ -23,6 +19,9 @@ build-backend = "hatchling.build"
 
 [tool.crewai]
 type = "crew"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/whats_this_id"]
 
 [dependency-groups]
 dev = [

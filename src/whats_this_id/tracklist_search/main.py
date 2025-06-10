@@ -3,7 +3,7 @@ import sys
 import warnings
 from datetime import datetime
 
-from tracklist_search.crew import WhatsThisId
+from whats_this_id.tracklist_search.crew import TracklistSearchCrew
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -20,7 +20,7 @@ def run():
     inputs = {"dj_set": "Mind Against Afterlife Voyage"}
 
     try:
-        WhatsThisId().crew().kickoff(inputs=inputs)
+        TracklistSearchCrew().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
@@ -31,7 +31,7 @@ def train():
     """
     inputs = {"topic": "AI LLMs", "current_year": str(datetime.now().year)}
     try:
-        WhatsThisId().crew().train(
+        TracklistSearchCrew().crew().train(
             n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
         )
 
@@ -44,7 +44,7 @@ def replay():
     Replay the crew execution from a specific task.
     """
     try:
-        WhatsThisId().crew().replay(task_id=sys.argv[1])
+        TracklistSearchCrew().crew().replay(task_id=sys.argv[1])
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
@@ -57,7 +57,7 @@ def test():
     inputs = {"topic": "AI LLMs", "current_year": str(datetime.now().year)}
 
     try:
-        WhatsThisId().crew().test(
+        TracklistSearchCrew().crew().test(
             n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs
         )
 

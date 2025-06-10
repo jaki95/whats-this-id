@@ -8,10 +8,11 @@ from crawl4ai import (
 )
 from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 
-from scraping.config import browser_config
+from whats_this_id.core.scrape.config import browser_config
 
 
 async def extract_google_search_links(website: str, query: str):
+    """Return the first result URL from a Google search restricted to *website* containing *query*."""
     encoded_query = quote(f"site:{website} {query}")
     search_url = f"https://www.google.com/search?q={encoded_query}"
 
@@ -36,7 +37,7 @@ async def extract_google_search_links(website: str, query: str):
         result = await crawler.arun(url=search_url, config=config)
         if not result.success:
             print("Crawl failed:", result.error_message)
-            return
+            return None
         data = json.loads(result.extracted_content)
         print(f"Extracted {len(data)} search results")
         for entry in data:
@@ -44,4 +45,4 @@ async def extract_google_search_links(website: str, query: str):
                 print(f"{entry['title']} -> {entry['link']}")
                 return entry["link"]
         print("No tracklist found")
-        return None
+        return None 

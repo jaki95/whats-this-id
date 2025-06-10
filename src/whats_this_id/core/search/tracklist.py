@@ -19,4 +19,4 @@ class Tracklist(BaseModel):
     year: int = Field(..., description="The year of the DJ set")
     artist: str = Field(..., description="The artist of the DJ set")
     genre: str = Field(..., description="The genre of the DJ set")
-    tracks: list[Track] = Field(..., description="The tracks in the DJ set")
+    tracks: list[Track] = Field(..., description="The tracks in the DJ set") 
