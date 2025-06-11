@@ -54,16 +54,16 @@ def main():
                 inputs = {"dj_set": st.session_state.query_text.strip()}
                 result = TracklistSearchCrew().crew().kickoff(inputs=inputs)
                 tracklist: Tracklist = result.pydantic
+                st.header(f"🎵 {tracklist.name}")
                 st.markdown(f"**Artist:** {tracklist.artist}")
                 st.markdown(f"**Year:** {tracklist.year}")
                 st.markdown(f"**Genre:** {tracklist.genre}")
                 st.markdown(f"**Tracks:**")
-                for track in tracklist.tracks:
-                    st.markdown(f"**{track.name}** - {track.artist}")
-                    st.markdown(
-                        f"**Start Time:** {track.start_time.strftime('%H:%M:%S')}"
-                    )
-                    st.markdown(f"**End Time:** {track.end_time.strftime('%H:%M:%S')}")
+                st.markdown("---")
+                for i, track in enumerate(tracklist.tracks):
+                    st.markdown(f"**{i+1}. {track.name}** - {track.artist}")
+                    st.markdown(f"**Start Time:** {track.start_time}")
+                    st.markdown(f"**End Time:** {track.end_time}")
                     st.markdown("---")
         else:
             st.warning("⚠️ Please enter a search query.")
