@@ -3,7 +3,13 @@ tracklist_search_task:
     Find the tracklist for the dj set {dj_set}
   expected_output: >
     A structured tracklist of the dj set. 
-    You must use the following websites to find the tracklist:
+    You must use the following websites to find the tracklist, following 
+    the order of the list:
     - 1001tracklists.com
     - trackid.net
+    If a tracklist presents gaps, you must fill them with a placeholder track.
+    The placeholder track must be "ID <ID number> - <dj_set>" by artist "ID",
+    where <ID number> is current count of ID tracks in the tracklist.
+    A gap is defined as a period of time between the beginning and the end of
+    the tracklist that is not filled with a track.
   agent: tracklist_finder
