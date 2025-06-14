@@ -138,7 +138,7 @@ def process_dj_set(dj_set_url: str, tracklist: Tracklist) -> None:
             )
 
         # Process the set
-        print(f"\nSubmitting processing job...")
+        print("\nSubmitting processing job...")
         job_id = processor.process_set(
             download_url=dj_set_url,
             tracklist=tracklist,
@@ -152,8 +152,8 @@ def process_dj_set(dj_set_url: str, tracklist: Tracklist) -> None:
         final_status = processor.wait_for_completion(job_id)
 
         if final_status.status == "completed":
-            print(f"\n✅ Processing completed!")
-            print(f"Output files:")
+            print("\n✅ Processing completed!")
+            print("Output files:")
             for file_path in final_status.results:
                 print(f"  - {file_path}")
         else:
