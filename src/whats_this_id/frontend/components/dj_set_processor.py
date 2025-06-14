@@ -2,14 +2,14 @@
 
 import streamlit as st
 
-from whats_this_id.core.downloader.client import PydanticDJSetProcessor
+from whats_this_id.core.downloader.client import DJSetProcessorClient
 from whats_this_id.core.models.tracklist import Tracklist
-from ..state import clear_processing_state
+from whats_this_id.frontend.state import clear_processing_state
 
 
 def process_dj_set_with_progress(dj_set_url: str, tracklist: Tracklist):
     """Process DJ set with real-time progress updates in Streamlit."""
-    processor = PydanticDJSetProcessor()
+    processor = DJSetProcessorClient()
     
     try:
         # Check health with better error handling

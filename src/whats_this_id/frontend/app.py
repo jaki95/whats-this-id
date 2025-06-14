@@ -3,10 +3,10 @@
 import asyncio
 import streamlit as st
 
-from .state import initialize_session_state, update_search_results
-from .utils.async_search import search_tracklist_and_soundcloud
-from .components.tracklist_display import render_tracklist_display
-from .components.dj_set_processor import render_processing_section
+from whats_this_id.frontend.state import initialize_session_state, update_search_results
+from whats_this_id.frontend.utils.async_search import search_tracklist_and_soundcloud
+from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
+from whats_this_id.frontend.components.dj_set_processor import render_processing_section
 
 
 # Page configuration
