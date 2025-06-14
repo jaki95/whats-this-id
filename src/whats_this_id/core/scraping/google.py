@@ -45,4 +45,4 @@ async def extract_google_search_links(website: str, query: str):
                 print(f"{entry['title']} -> {entry['link']}")
                 return entry["link"]
         print("No tracklist found")
-        return None 
+        return None

@@ -26,4 +26,4 @@ def clear_processing_state():
 def update_search_results(tracklist, dj_set_url):
     """Update session state with search results."""
     st.session_state.tracklist = tracklist
-    st.session_state.dj_set_url = dj_set_url 
+    st.session_state.dj_set_url = dj_set_url

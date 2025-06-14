@@ -1,11 +1,11 @@
+from pathlib import Path
+
 from crawl4ai import (
     BrowserConfig,
     CrawlerRunConfig,
 )
 from crawl4ai.content_filter_strategy import PruningContentFilter
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
-
-from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[5]
 
@@ -32,4 +32,4 @@ crawler_config = CrawlerRunConfig(
         },
     ),
     remove_overlay_elements=True,
-) 
+)

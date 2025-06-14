@@ -1,9 +1,9 @@
 import asyncio
 from pathlib import Path
 
-from whats_this_id.core.scraping.google import extract_google_search_links
-
 from sclib import SoundcloudAPI
+
+from whats_this_id.core.scraping.google import extract_google_search_links
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -27,4 +27,4 @@ def download_soundcloud_djset(url: str) -> None:
 
 if __name__ == "__main__":
     # Example usage
-    download_soundcloud_djset(find_soundcloud_djset("dax j chlar stone")) 
+    download_soundcloud_djset(find_soundcloud_djset("dax j chlar stone"))
