@@ -12,4 +12,9 @@ tracklist_search_task:
     where <ID number> is current count of ID tracks in the tracklist.
     A gap is defined as a period of time between the beginning and the end of
     the tracklist that is not filled with a track.
+    Sometimes the first track will have a blank instead of the 00:00 timestamp.
+    In this case, you must fill it with the 00:00 timestamp.
+    If two tracks have the same timestamp, there either is no information on 
+    the transition or there is uncertainty about the right track. In this case,
+    make an informed decision based on context and length of gap.
   agent: tracklist_finder
