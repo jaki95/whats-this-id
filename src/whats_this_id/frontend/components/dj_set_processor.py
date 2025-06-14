@@ -61,7 +61,7 @@ def progress_tracker():
         st.info("ℹ️ No active processing job")
         return
     
-    processor = PydanticDJSetProcessor()
+    processor = DJSetProcessorClient()
     
     try:
         status = processor.get_job_status(st.session_state.processing_job_id)
