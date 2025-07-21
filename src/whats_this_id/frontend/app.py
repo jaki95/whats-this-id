@@ -1,13 +1,11 @@
 """Main Streamlit application for What's This ID."""
 
-import asyncio
-
 import streamlit as st
 
 from whats_this_id.frontend.components.dj_set_processor import render_processing_section
 from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
 from whats_this_id.frontend.state import initialize_session_state, update_search_results
-from whats_this_id.frontend.utils.async_search import search_tracklist_and_soundcloud
+from whats_this_id.frontend.utils.async_search import search_tracklist_and_soundcloud_sync
 
 # Page configuration
 st.set_page_config(
@@ -49,9 +47,7 @@ def render_search_section():
                 "🤖 AI agents are searching for tracklists and SoundCloud..."
             ):
                 # Run both searches concurrently
-                result, dj_set_url = asyncio.run(
-                    search_tracklist_and_soundcloud(st.session_state.query_text)
-                )
+                result, dj_set_url = search_tracklist_and_soundcloud_sync(st.session_state.query_text)
                 update_search_results(result.pydantic, dj_set_url)
         else:
             st.warning("Please enter a search query.")

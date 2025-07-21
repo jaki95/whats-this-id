@@ -10,9 +10,9 @@ DATA_DIR = PROJECT_ROOT / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 
-def find_soundcloud_djset(dj_set: str) -> str:
+async def find_soundcloud_djset(dj_set: str) -> str:
     """Return a SoundCloud URL for the given *dj_set* query."""
-    soundcloud_url = asyncio.run(extract_google_search_links("soundcloud.com", dj_set))
+    soundcloud_url = await extract_google_search_links("soundcloud.com", dj_set)
     return soundcloud_url or ""
 
 
@@ -27,4 +27,9 @@ def download_soundcloud_djset(url: str) -> None:
 
 if __name__ == "__main__":
     # Example usage
-    download_soundcloud_djset(find_soundcloud_djset("dax j chlar stone"))
+    async def main():
+        soundcloud_url = await find_soundcloud_djset("dax j chlar stone")
+        if soundcloud_url:
+            download_soundcloud_djset(soundcloud_url)
+    
+    asyncio.run(main())
