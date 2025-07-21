@@ -1,5 +1,7 @@
 import json
+import asyncio
 from urllib.parse import quote
+from typing import Optional
 
 from crawl4ai import (
     AsyncWebCrawler,
@@ -11,7 +13,7 @@ from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 from whats_this_id.core.scraping.config import browser_config
 
 
-async def extract_google_search_links(website: str, query: str):
+async def extract_google_search_links(website: str, query: str, timeout: int = 30, max_retries: int = 3) -> Optional[str]:
     """Return the first result URL from a Google search restricted to *website* containing *query*."""
     encoded_query = quote(f"site:{website} {query}")
     search_url = f"https://www.google.com/search?q={encoded_query}"
@@ -33,16 +35,64 @@ async def extract_google_search_links(website: str, query: str):
         extraction_strategy=extraction_strategy,
     )
 
-    async with AsyncWebCrawler(config=browser_config) as crawler:
-        result = await crawler.arun(url=search_url, config=config)
-        if not result.success:
-            print("Crawl failed:", result.error_message)
-            return None
-        data = json.loads(result.extracted_content)
-        print(f"Extracted {len(data)} search results")
-        for entry in data:
-            if website in entry["link"]:
-                print(f"{entry['title']} -> {entry['link']}")
-                return entry["link"]
-        print("No tracklist found")
-        return None
+    crawler = None
+    for attempt in range(max_retries):
+        try:
+            # Create crawler with timeout wrapper
+            crawler = AsyncWebCrawler(config=browser_config)
+            
+            # Use asyncio.wait_for to add timeout protection
+            await crawler.__aenter__()
+            try:
+                result = await asyncio.wait_for(
+                    crawler.arun(url=search_url, config=config),
+                    timeout=timeout
+                )
+                
+                if not result.success:
+                    print(f"Crawl failed (attempt {attempt + 1}): {result.error_message}")
+                    if attempt == max_retries - 1:
+                        return None
+                    continue
+                
+                data = json.loads(result.extracted_content)
+                print(f"Extracted {len(data)} search results")
+                
+                for entry in data:
+                    if website in entry["link"]:
+                        print(f"{entry['title']} -> {entry['link']}")
+                        return entry["link"]
+                
+                print("No tracklist found")
+                return None
+                
+            finally:
+                # Ensure proper cleanup
+                await crawler.__aexit__(None, None, None)
+                     
+        except asyncio.TimeoutError:
+            print(f"Search timed out after {timeout}s (attempt {attempt + 1}/{max_retries})")
+            if crawler:
+                try:
+                    await crawler.close()
+                except:
+                    pass  # Ignore cleanup errors on timeout
+            
+            if attempt == max_retries - 1:
+                return None
+            await asyncio.sleep(1)  # Brief delay before retry
+            
+        except Exception as e:
+            print(f"Search failed (attempt {attempt + 1}/{max_retries}): {e}")
+            
+            if crawler:
+                try:
+                    await crawler.close()
+                except:
+                    pass  # Ignore cleanup errors
+            
+            if attempt == max_retries - 1:
+                return None
+            await asyncio.sleep(1)  # Brief delay before retry
+    
+    return None

@@ -53,8 +53,8 @@ class DJSetProcessorClient:
         payload = {
             "url": download_url,
             "tracklist": json.dumps(tracklist_data),
-            "fileExtension": file_extension,
-            "maxConcurrentTasks": max_concurrent_tasks,
+            "file_extension": file_extension,
+            "max_concurrent_tasks": max_concurrent_tasks,
         }
 
         response = self.session.post(f"{self.base_url}/api/process", json=payload)
@@ -70,11 +70,29 @@ class DJSetProcessorClient:
 
     def get_job_status(self, job_id: str) -> JobStatus:
         """Get the enhanced status of a specific job."""
-        response = self.session.get(f"{self.base_url}/api/jobs/{job_id}")
-        response.raise_for_status()
-        
-        data = response.json()
-        return JobStatus.model_validate(data)
+        try:
+            response = self.session.get(f"{self.base_url}/api/jobs/{job_id}")
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            # Add debugging information for troubleshooting
+            print(f"API Response for job {job_id}: {data}")
+            
+            # Validate critical fields before model validation
+            if 'events' in data and data['events'] is None:
+                print(f"Warning: API returned null events for job {job_id}, will be converted to empty list")
+            
+            if 'tracks' in data and data['tracks'] is None:
+                print(f"Warning: API returned null tracks for job {job_id}, will be converted to empty list")
+            
+            return JobStatus.model_validate(data)
+            
+        except Exception as e:
+            print(f"Error getting job status for {job_id}: {e}")
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                print(f"API Response text: {e.response.text}")
+            raise
 
     def get_tracks_info(self, job_id: str) -> dict[str, Any]:
         """Get detailed track information for a completed job."""
