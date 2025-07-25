@@ -17,25 +17,6 @@ browser_config = BrowserConfig(
     use_managed_browser=True,
     user_data_dir=BROWSER_CACHE_DIR,
     browser_type="chromium",
-    # Add browser arguments for stability
-    browser_args=[
-        "--no-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-features=VizDisplayCompositor",
-        "--disable-extensions",
-        "--disable-plugins",
-        "--disable-images",  # Skip images for faster loading
-        "--disable-javascript",  # Disable JS if not needed for basic HTML parsing
-        "--no-first-run",
-        "--disable-default-apps",
-        "--disable-background-timer-throttling",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-renderer-backgrounding",
-    ],
-    # Add timeouts
-    page_timeout=30000,  # 30 seconds page timeout
-    request_timeout=20000,  # 20 seconds request timeout
 )
 
 prune_filter = PruningContentFilter(
