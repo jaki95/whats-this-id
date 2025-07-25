@@ -49,12 +49,11 @@ class SearchService:
                 lambda q: self.crew.crew().kickoff(inputs={"dj_set": q}),
                 query_text.strip(),
             )
-            soundcloud_search = partial(find_soundcloud_djset, query_text)
 
             # Submit both tasks to run concurrently
             loop = asyncio.get_event_loop()
             tracklist_future = loop.run_in_executor(executor, tracklist_search)
-            soundcloud_future = loop.run_in_executor(executor, soundcloud_search)
+            soundcloud_future = find_soundcloud_djset(query_text)
 
             # Wait for both to complete
             tracklist_result, dj_set_url = await asyncio.gather(
@@ -74,8 +73,8 @@ class SearchService:
         """
         return self.crew.crew().kickoff(inputs={"dj_set": query_text.strip()})
 
-    def search_soundcloud(self, query_text: str) -> str:
-        """Search for SoundCloud DJ set URL (synchronous).
+    async def search_soundcloud(self, query_text: str) -> str:
+        """Search for SoundCloud DJ set URL (asynchronous).
 
         Args:
             query_text: The search query string
@@ -83,7 +82,7 @@ class SearchService:
         Returns:
             SoundCloud URL
         """
-        return find_soundcloud_djset(query_text)
+        return await find_soundcloud_djset(query_text)
 
 
 def get_search_service() -> SearchService:
