@@ -911,6 +911,21 @@ wheels = [
 ]
 
 [[package]]
+name = "dj-set-downloader"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "typing-extensions" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/19/cfe5a95b8652ff9964d1f0bf96f8cf4dd9d18b810a5e716c9fa353943d39/dj_set_downloader-0.1.3.tar.gz", hash = "sha256:7738042ae4ecef4a29daa75c6eb4bfe88ecefca024d87f25117c1fcb5df779e0", size = 40963, upload-time = "2025-07-25T16:24:56.186Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/59/a9f9b40dc1106ecf4afd70f56324e155f242cf63284f1e92dab8640c8f70/dj_set_downloader-0.1.3-py3-none-any.whl", hash = "sha256:0b0bfe673395fc110d3a77aea3fd26af4bbc2dd91c5b04e56a7f7efb8566ed85", size = 73577, upload-time = "2025-07-25T16:24:54.979Z" },
+]
+
+[[package]]
 name = "docker"
 version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3390,7 +3405,7 @@ wheels = [
 
 [[package]]
 name = "pydantic"
-version = "2.11.5"
+version = "2.11.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -3398,9 +3413,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/86/8ce9040065e8f924d642c58e4a344e33163a07f6b57f836d0d734e0ad3fb/pydantic-2.11.5.tar.gz", hash = "sha256:7f853db3d0ce78ce8bbb148c401c2cdd6431b3473c0cdff2755c7690952a7b7a", size = 787102, upload-time = "2025-05-22T21:18:08.761Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/dd/4325abf92c39ba8623b5af936ddb36ffcfe0beae70405d456ab1fb2f5b8c/pydantic-2.11.7.tar.gz", hash = "sha256:d989c3c6cb79469287b1569f7447a17848c998458d49ebe294e975b9baf0f0db", size = 788350, upload-time = "2025-06-14T08:33:17.137Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/69/831ed22b38ff9b4b64b66569f0e5b7b97cf3638346eb95a2147fdb49ad5f/pydantic-2.11.5-py3-none-any.whl", hash = "sha256:f9c26ba06f9747749ca1e5c94d6a85cb84254577553c8785576fd38fa64dc0f7", size = 444229, upload-time = "2025-05-22T21:18:06.329Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/c0/ec2b1c8712ca690e5d61979dee872603e92b8a32f94cc1b72d53beab008a/pydantic-2.11.7-py3-none-any.whl", hash = "sha256:dde5df002701f6de26248661f6835bbe296a47bf73990135c7d07ce741b9623b", size = 444782, upload-time = "2025-06-14T08:33:14.905Z" },
 ]
 
 [[package]]
@@ -4813,6 +4828,7 @@ dependencies = [
     { name = "crawl4ai" },
     { name = "crewai", extra = ["tools"] },
     { name = "crewai-tools" },
+    { name = "dj-set-downloader" },
     { name = "ffmpeg" },
     { name = "soundcloud-lib" },
     { name = "streamlit" },
@@ -4829,6 +4845,7 @@ requires-dist = [
     { name = "crawl4ai", specifier = ">=0.6.3" },
     { name = "crewai", extras = ["tools"], specifier = ">=0.126.0,<1.0.0" },
     { name = "crewai-tools", specifier = ">=0.46.0" },
+    { name = "dj-set-downloader", specifier = ">=0.1.3" },
     { name = "ffmpeg", specifier = ">=1.4" },
     { name = "soundcloud-lib", specifier = ">=0.6.1" },
     { name = "streamlit", specifier = ">=1.45.1" },

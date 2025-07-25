@@ -1,9 +1,9 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
+from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
 from whats_this_id.agents.tracklist_finder.tools.find_tracklist import FindTracklist
-from whats_this_id.core.models.tracklist import Tracklist
 
 
 @CrewBase
@@ -25,7 +25,7 @@ class TracklistSearchCrew:
     def tracklist_search_task(self) -> Task:
         return Task(
             config=self.tasks_config["tracklist_search_task"],  # type: ignore[index]
-            output_pydantic=Tracklist,
+            output_pydantic=DomainTracklist,
         )
 
     @crew
