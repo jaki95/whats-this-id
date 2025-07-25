@@ -1,10 +1,11 @@
 """Search component for tracklist queries."""
 
 import asyncio
+
 import streamlit as st
 
 from whats_this_id.frontend.config import AppConfig
-from whats_this_id.frontend.services import SearchService
+from whats_this_id.frontend.services import get_search_service
 from whats_this_id.frontend.state import update_search_results
 
 
@@ -29,9 +30,7 @@ def render_search_section():
     col1, col2, col3 = st.columns(AppConfig.SEARCH_BUTTON_COLUMNS)
     with col2:
         search_button = st.button(
-            AppConfig.SEARCH_BUTTON_TEXT,
-            type="primary", 
-            use_container_width=True
+            AppConfig.SEARCH_BUTTON_TEXT, type="primary", use_container_width=True
         )
 
     # Handle search
@@ -44,9 +43,9 @@ def _handle_search_action():
     if not st.session_state.query_text.strip():
         st.warning("Please enter a search query.")
         return
-    
-    search_service = SearchService()
-    
+
+    search_service = get_search_service()
+
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
             # Run both searches concurrently
@@ -56,7 +55,7 @@ def _handle_search_action():
                 )
             )
             update_search_results(result.pydantic, dj_set_url)
-            
+
         except Exception as e:
             st.error(f"Search failed: {e}")
-            st.error("Please try again or check your query.") 
+            st.error("Please try again or check your query.")
