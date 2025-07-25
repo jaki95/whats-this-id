@@ -14,14 +14,10 @@ def render_app_header():
 
 
 def main():
-    """Main application function."""
-    # Configure Streamlit page
     configure_streamlit_page()
     
-    # Initialize session state
     initialize_session_state()
     
-    # Render app sections
     render_app_header()
     render_search_section()
     render_results_section()

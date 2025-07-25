@@ -38,10 +38,8 @@ async def extract_google_search_links(website: str, query: str, timeout: int = 3
     crawler = None
     for attempt in range(max_retries):
         try:
-            # Create crawler with timeout wrapper
             crawler = AsyncWebCrawler(config=browser_config)
             
-            # Use asyncio.wait_for to add timeout protection
             await crawler.__aenter__()
             try:
                 result = await asyncio.wait_for(
@@ -80,7 +78,7 @@ async def extract_google_search_links(website: str, query: str, timeout: int = 3
             
             if attempt == max_retries - 1:
                 return None
-            await asyncio.sleep(1)  # Brief delay before retry
+            await asyncio.sleep(1) 
             
         except Exception as e:
             print(f"Search failed (attempt {attempt + 1}/{max_retries}): {e}")
