@@ -2,7 +2,9 @@
 
 import streamlit as st
 
-from whats_this_id.frontend.components.processing_controls import render_processing_controls
+from whats_this_id.frontend.components.processing_controls import (
+    render_processing_controls,
+)
 from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
 from whats_this_id.frontend.config import AppConfig
 

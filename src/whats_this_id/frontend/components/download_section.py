@@ -6,6 +6,27 @@ from whats_this_id.frontend.services import get_dj_set_processor_service
 from whats_this_id.frontend.state import clear_processing_state
 
 
+def _create_download_button(
+    file_data: bytes, filename: str, processor_service, label_prefix: str = "💾 Save"
+) -> None:
+    """Create a standardized download button with file size and proper MIME type.
+
+    Args:
+        file_data: The file data to download
+        filename: Name of the file
+        processor_service: The DJ set processor service instance
+        label_prefix: Prefix for the button label
+    """
+    file_size = processor_service.format_file_size(len(file_data))
+    st.download_button(
+        label=f"{label_prefix} {filename} ({file_size})",
+        data=file_data,
+        file_name=filename,
+        mime=processor_service.get_mime_type(filename),
+        use_container_width=True,
+    )
+
+
 def render_download_section(job_id: str, status) -> None:
     """Render the download section for completed jobs.
 
@@ -17,7 +38,6 @@ def render_download_section(job_id: str, status) -> None:
 
     st.subheader("📥 Download Processed Tracks")
 
-    # Get tracks information
     tracks_info = processor_service.get_tracks_info(job_id)
 
     if tracks_info:
@@ -25,7 +45,6 @@ def render_download_section(job_id: str, status) -> None:
     else:
         _render_basic_download_options(job_id, status, processor_service)
 
-    # Clear job state button
     if st.button("🧹 Clear Results", use_container_width=True):
         clear_processing_state()
         st.rerun()
@@ -36,29 +55,21 @@ def _render_tracks_download_options(
 ) -> None:
     """Render download options when detailed track info is available."""
 
-    # Download all tracks as ZIP
     st.markdown("### 📦 Download All Tracks")
     if st.button("⬇️ Download All as ZIP", use_container_width=True):
         with st.spinner("Preparing ZIP file..."):
             result = processor_service.download_all_tracks(job_id)
             if result:
                 file_data, filename = result
-                st.download_button(
-                    label=f"💾 Save {filename} ({processor_service.format_file_size(len(file_data))})",
-                    data=file_data,
-                    file_name=filename,
-                    mime=processor_service.get_mime_type(filename),
-                    use_container_width=True,
-                )
+                _create_download_button(file_data, filename, processor_service)
                 st.success("✅ ZIP file ready for download!")
 
-    # Individual track downloads
-    if hasattr(tracks_info, 'tracks') and tracks_info.tracks:
+    if hasattr(tracks_info, "tracks") and tracks_info.tracks:
         st.markdown("### 🎵 Download Individual Tracks")
 
         for i, track in enumerate(tracks_info.tracks):
-            track_name = getattr(track, 'name', f"Track {i+1}")
-            file_size = getattr(track, 'file_size', 0)
+            track_name = getattr(track, "name", f"Track {i + 1}")
+            file_size = getattr(track, "file_size", 0)
 
             col1, col2 = st.columns([3, 1])
 
@@ -69,44 +80,32 @@ def _render_tracks_download_options(
 
             with col2:
                 if st.button(
-                    f"⬇️", key=f"download_{track_name}_{i}", help=f"Download {track_name}"
+                    f"⬇️",
+                    key=f"download_{track_name}_{i}",
+                    help=f"Download {track_name}",
                 ):
                     with st.spinner(f"Downloading {track_name}..."):
                         result = processor_service.download_single_track(
-                            job_id, i + 1  # Track numbers are usually 1-indexed
+                            job_id,
+                            i + 1,  # Track numbers are usually 1-indexed
                         )
                         if result:
                             file_data, filename = result
-                            st.download_button(
-                                label=f"💾 Save {filename}",
-                                data=file_data,
-                                file_name=filename,
-                                mime=processor_service.get_mime_type(filename),
-                                key=f"save_{track_name}_{i}",
+                            _create_download_button(
+                                file_data,
+                                filename,
+                                processor_service,
+                                label_prefix="💾",
                             )
 
 
 def _render_basic_download_options(job_id: str, status, processor_service) -> None:
     """Render basic download options when detailed track info is unavailable."""
 
-    # Try to download all tracks as ZIP
     if st.button("⬇️ Download All Tracks", use_container_width=True):
         with st.spinner("Preparing download..."):
             result = processor_service.download_all_tracks(job_id)
             if result:
                 file_data, filename = result
-                st.download_button(
-                    label=f"💾 Save {filename} ({processor_service.format_file_size(len(file_data))})",
-                    data=file_data,
-                    file_name=filename,
-                    mime=processor_service.get_mime_type(filename),
-                    use_container_width=True,
-                )
+                _create_download_button(file_data, filename, processor_service)
                 st.success("✅ Download ready!")
-
-    # Show legacy file paths if available
-    if hasattr(status, "results") and status.results:
-        with st.expander("📁 Raw Output Files (Advanced)"):
-            st.write("Legacy file paths:")
-            for file_path in status.results:
-                st.code(file_path)
