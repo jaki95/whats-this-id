@@ -97,7 +97,7 @@ class DJSetProcessorService:
                     max_concurrent_tasks=max_concurrent_tasks,
                 )
             )
-            if response.status_code != HTTPStatus.OK:
+            if response.status_code != HTTPStatus.ACCEPTED:
                 error_msg = f"Error submitting processing job: {response.status_code}"
                 st.error(error_msg)
                 return False, error_msg, None

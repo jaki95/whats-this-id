@@ -78,7 +78,7 @@ async def extract_google_search_links(
             if crawler:
                 try:
                     await crawler.close()
-                except:
+                except Exception:
                     pass  # Ignore cleanup errors on timeout
 
             if attempt == max_retries - 1:
@@ -91,7 +91,7 @@ async def extract_google_search_links(
             if crawler:
                 try:
                     await crawler.close()
-                except:
+                except Exception:
                     pass  # Ignore cleanup errors
 
             if attempt == max_retries - 1:

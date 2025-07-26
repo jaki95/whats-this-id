@@ -80,7 +80,7 @@ def _render_tracks_download_options(
 
             with col2:
                 if st.button(
-                    f"⬇️",
+                    "⬇️",
                     key=f"download_{track_name}_{i}",
                     help=f"Download {track_name}",
                 ):
