@@ -10,7 +10,7 @@ DATA_DIR.mkdir(exist_ok=True)
 
 
 class SoundCloudHandler:
-    """Handles SoundCloud DJ set finding and downloading operations."""
+    """Handles SoundCloud DJ set search."""
 
     DEFAULT_SEARCH_SITE = "soundcloud.com"
 

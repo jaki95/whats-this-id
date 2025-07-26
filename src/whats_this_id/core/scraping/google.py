@@ -20,7 +20,7 @@ class GoogleSearchResult:
         self.link = link
 
 
-class GoogleSearcher:
+class GoogleHandler:
     """Handles Google search operations with site restrictions."""
 
     # Search result schema for Google
@@ -142,12 +142,3 @@ class GoogleSearcher:
                     await asyncio.sleep(self.RETRY_DELAY)
 
         return None
-
-
-# Backward compatibility function
-async def extract_google_search_links(
-    website: str, query: str, timeout: int = 30, max_retries: int = 3
-) -> str | None:
-    """Return the first result URL from a Google search restricted to *website* containing *query*."""
-    searcher = GoogleSearcher(timeout=timeout, max_retries=max_retries)
-    return await searcher.search_for_tracklist_link(website, query)

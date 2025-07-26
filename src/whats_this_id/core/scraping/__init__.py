@@ -1,9 +1,9 @@
-from .google import extract_google_search_links
+from .google import GoogleHandler
 from .soundcloud import SoundCloudHandler
 from .tracklist import extract_tracklist
 
 __all__ = [
-    "extract_google_search_links",
+    "GoogleHandler",
     "extract_tracklist",
     "SoundCloudHandler",
 ]
