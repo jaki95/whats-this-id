@@ -26,7 +26,7 @@ class FindTracklist(BaseTool):
             if not tracklist_url:
                 return ""
             return await extract_tracklist(tracklist_url)
-        
+
         # Create a new event loop to avoid nested event loop issues
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

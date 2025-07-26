@@ -2,8 +2,11 @@
 
 import streamlit as st
 
+from whats_this_id.frontend.components import (
+    render_results_section,
+    render_search_section,
+)
 from whats_this_id.frontend.config import AppConfig, configure_streamlit_page
-from whats_this_id.frontend.components import render_search_section, render_results_section
 from whats_this_id.frontend.state import initialize_session_state
 
 
@@ -15,9 +18,9 @@ def render_app_header():
 
 def main():
     configure_streamlit_page()
-    
+
     initialize_session_state()
-    
+
     render_app_header()
     render_search_section()
     render_results_section()

@@ -31,13 +31,13 @@ def clear_download_state():
     """Clear download-related session state."""
     st.session_state.download_in_progress = False
     st.session_state.downloaded_files = []
-    
+
     # Clear any prepared download data
     keys_to_remove = []
     for key in st.session_state.keys():
         if key.startswith("download_data_") or key.startswith("track_data_"):
             keys_to_remove.append(key)
-    
+
     for key in keys_to_remove:
         del st.session_state[key]
 

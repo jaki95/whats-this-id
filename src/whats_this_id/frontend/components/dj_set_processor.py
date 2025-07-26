@@ -3,16 +3,16 @@
 import streamlit as st
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
+from whats_this_id.frontend.components.download_section import render_download_section
 from whats_this_id.frontend.services import display_api_error, get_api_service
 from whats_this_id.frontend.state import clear_processing_state
-from whats_this_id.frontend.components.download_section import render_download_section
 
 
 def _check_service_health() -> bool:
     """Check if the DJ set processor service is healthy and display status."""
     api_service = get_api_service()
     is_healthy, message = api_service.check_health()
-    
+
     if is_healthy:
         st.success(message)
         return True
@@ -25,10 +25,10 @@ def _submit_processing_job(dj_set_url: str, tracklist: DomainTracklist) -> bool:
     """Submit a new processing job if one isn't already active."""
     if st.session_state.processing_job_id:
         return True  # Job already exists
-    
+
     api_service = get_api_service()
     success, message, job_id = api_service.submit_processing_job(dj_set_url, tracklist)
-    
+
     if success:
         st.session_state.processing_job_id = job_id
         st.info(f"Processing job submitted: {job_id}")
@@ -45,10 +45,10 @@ def process_dj_set_with_progress(dj_set_url: str, tracklist: DomainTracklist):
         # Check service health first
         if not _check_service_health():
             return
-        
+
         # Submit processing job
         _submit_processing_job(dj_set_url, tracklist)
-        
+
     except Exception as e:
         st.error(f"Error processing DJ set: {e}")
         clear_processing_state()
@@ -62,7 +62,7 @@ def progress_tracker():
         return
 
     api_service = get_api_service()
-    
+
     try:
         status = api_service.get_job_status(st.session_state.processing_job_id)
         st.session_state.processing_status = status
@@ -70,29 +70,29 @@ def progress_tracker():
         if status.status == "processing":
             # Show progress bar and cancel button
             _render_processing_status(status, api_service)
-            
+
         elif status.status == "completed":
             st.progress(1.0)
             st.success("✅ Processing completed successfully!")
 
             # Show download section with new functionality
             render_download_section(st.session_state.processing_job_id, status)
-            
+
             # Stop auto-refresh once completed
             st.stop()
-            
+
         elif status.status == "failed":
             st.error(f"Processing failed: {status.error}")
             clear_processing_state()
             # Stop auto-refresh on failure
             st.stop()
-            
+
         elif status.status == "cancelled":
             st.warning("Processing was cancelled")
             clear_processing_state()
             # Stop auto-refresh on cancellation
             st.stop()
-            
+
         else:
             st.warning(f"Unknown status: {status.status}")
 

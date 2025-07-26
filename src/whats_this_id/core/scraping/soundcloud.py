@@ -31,5 +31,5 @@ if __name__ == "__main__":
         soundcloud_url = await find_soundcloud_djset("dax j chlar stone")
         if soundcloud_url:
             download_soundcloud_djset(soundcloud_url)
-    
+
     asyncio.run(main())
