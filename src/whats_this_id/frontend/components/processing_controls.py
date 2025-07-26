@@ -1,4 +1,4 @@
-"""DJ set processing components with real-time progress tracking."""
+"""Processing controls component with real-time progress tracking."""
 
 import streamlit as st
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
@@ -118,8 +118,8 @@ def _render_processing_status(status, api_service):
             st.error("Failed to cancel processing")
 
 
-def render_processing_section():
-    """Render the DJ set processing section."""
+def render_processing_controls():
+    """Render the DJ set processing controls."""
     # Split DJ Set button
     split_dj_set_button = st.button(
         "Split DJ Set",
@@ -142,4 +142,4 @@ def render_processing_section():
                 st.session_state.tracklist,
             )
         else:
-            st.warning("Please find the DJ set URL first.")
+            st.warning("Please find the DJ set URL first.") 
