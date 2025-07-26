@@ -4,13 +4,13 @@ import streamlit as st
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
 from whats_this_id.frontend.components.download_section import render_download_section
-from whats_this_id.frontend.services import display_api_error, get_api_service
+from whats_this_id.frontend.services import display_api_error, get_dj_set_processor_service
 from whats_this_id.frontend.state import clear_processing_state
 
 
 def _check_service_health() -> bool:
     """Check if the DJ set processor service is healthy and display status."""
-    api_service = get_api_service()
+    api_service = get_dj_set_processor_service()
     is_healthy, message = api_service.check_health()
 
     if is_healthy:
@@ -26,7 +26,7 @@ def _submit_processing_job(dj_set_url: str, tracklist: DomainTracklist) -> bool:
     if st.session_state.processing_job_id:
         return True  # Job already exists
 
-    api_service = get_api_service()
+    api_service = get_dj_set_processor_service()
     success, message, job_id = api_service.submit_processing_job(dj_set_url, tracklist)
 
     if success:
@@ -61,7 +61,7 @@ def progress_tracker():
         st.info("ℹ️ No active processing job")
         return
 
-    api_service = get_api_service()
+    api_service = get_dj_set_processor_service()
 
     try:
         status = api_service.get_job_status(st.session_state.processing_job_id)

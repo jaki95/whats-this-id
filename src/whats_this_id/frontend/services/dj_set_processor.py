@@ -281,7 +281,7 @@ class DJSetProcessorService:
 
 def get_dj_set_processor_service() -> DJSetProcessorService:
     """Get the singleton API service instance.
-
+    
     Returns:
         DJSetProcessorService instance
     """
