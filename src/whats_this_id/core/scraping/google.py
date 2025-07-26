@@ -98,9 +98,7 @@ class GoogleSearcher:
             print(f"Extracted {len(results)} search results")
             return results
 
-    async def search_for_tracklist_link(
-        self, website: str, query: str
-    ) -> str | None:
+    async def search_for_tracklist_link(self, website: str, query: str) -> str | None:
         """
         Search for a tracklist link on a specific website.
 
