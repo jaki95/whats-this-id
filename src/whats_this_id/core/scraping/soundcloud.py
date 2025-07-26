@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 from sclib import SoundcloudAPI
@@ -10,26 +9,38 @@ DATA_DIR = PROJECT_ROOT / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 
-async def find_soundcloud_djset(dj_set: str) -> str:
-    """Return a SoundCloud URL for the given *dj_set* query."""
-    soundcloud_url = await extract_google_search_links("soundcloud.com", dj_set)
-    return soundcloud_url or ""
+class SoundCloudHandler:
+    """Handles SoundCloud DJ set finding and downloading operations."""
 
+    DEFAULT_SEARCH_SITE = "soundcloud.com"
 
-def download_soundcloud_djset(url: str) -> None:
-    """Download the DJ set MP3 from *url* into the local `data/` directory."""
-    api = SoundcloudAPI()
-    track = api.resolve(url)
-    filename = DATA_DIR / f"{track.title}.mp3"
-    with open(filename, "wb+") as file:
-        track.write_mp3_to(file)
+    def __init__(self, data_dir: Path = DATA_DIR):
+        self.data_dir = data_dir
+        self.data_dir.mkdir(exist_ok=True)
+        self._api: SoundcloudAPI | None = None
 
+    @property
+    def api(self) -> SoundcloudAPI:
+        """Lazy-load the SoundCloud API instance."""
+        if self._api is None:
+            self._api = SoundcloudAPI()
+        return self._api
 
-if __name__ == "__main__":
-    # Example usage
-    async def main():
-        soundcloud_url = await find_soundcloud_djset("dax j chlar stone")
-        if soundcloud_url:
-            download_soundcloud_djset(soundcloud_url)
+    async def find_dj_set_url(self, dj_set: str) -> str | None:
+        """
+        Find a SoundCloud URL for the given DJ set query.
 
-    asyncio.run(main())
+        Args:
+            dj_set: The search query for the DJ set
+
+        Returns:
+            SoundCloud URL if found, None otherwise
+        """
+        try:
+            soundcloud_url = await extract_google_search_links(
+                self.DEFAULT_SEARCH_SITE, dj_set
+            )
+            return soundcloud_url
+        except Exception as e:
+            print(f"Error finding SoundCloud DJ set '{dj_set}': {e}")
+            return None
