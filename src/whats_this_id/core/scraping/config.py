@@ -13,7 +13,7 @@ BROWSER_CACHE_DIR = (ROOT_DIR / "browser_cache").as_posix()
 
 browser_config = BrowserConfig(
     headless=True,
-    verbose=True,
+    verbose=False,
     use_managed_browser=True,
     user_data_dir=BROWSER_CACHE_DIR,
     browser_type="chromium",
@@ -32,4 +32,5 @@ crawler_config = CrawlerRunConfig(
         },
     ),
     remove_overlay_elements=True,
+    page_timeout=30000,
 )

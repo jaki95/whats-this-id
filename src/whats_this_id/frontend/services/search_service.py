@@ -6,7 +6,7 @@ from functools import partial
 from typing import Any, Optional, Tuple
 
 from whats_this_id.agents import TracklistSearchCrew
-from whats_this_id.core.scraping.soundcloud import find_soundcloud_djset
+from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
 
 
 class SearchService:
@@ -25,6 +25,7 @@ class SearchService:
         """Initialize the search service (only once)."""
         if not self._initialized:
             self._crew = None
+            self._soundcloud_handler = None
             self._initialized = True
 
     @property
@@ -33,6 +34,13 @@ class SearchService:
         if self._crew is None:
             self._crew = TracklistSearchCrew()
         return self._crew
+
+    @property
+    def soundcloud_handler(self) -> SoundCloudHandler:
+        """Get or create the SoundCloud handler (lazy initialization)."""
+        if self._soundcloud_handler is None:
+            self._soundcloud_handler = SoundCloudHandler()
+        return self._soundcloud_handler
 
     async def search_tracklist_and_soundcloud(self, query_text: str) -> Tuple[Any, str]:
         """Run tracklist search and SoundCloud search concurrently.
@@ -49,19 +57,18 @@ class SearchService:
                 lambda q: self.crew.crew().kickoff(inputs={"dj_set": q}),
                 query_text.strip(),
             )
-            soundcloud_search = partial(find_soundcloud_djset, query_text)
 
             # Submit both tasks to run concurrently
             loop = asyncio.get_event_loop()
             tracklist_future = loop.run_in_executor(executor, tracklist_search)
-            soundcloud_future = loop.run_in_executor(executor, soundcloud_search)
+            soundcloud_future = self.soundcloud_handler.find_dj_set_url(query_text)
 
             # Wait for both to complete
             tracklist_result, dj_set_url = await asyncio.gather(
                 tracklist_future, soundcloud_future
             )
 
-            return tracklist_result, dj_set_url
+            return tracklist_result, dj_set_url or ""
 
     def search_tracklist(self, query_text: str) -> Any:
         """Search for tracklist only (synchronous).
@@ -74,8 +81,8 @@ class SearchService:
         """
         return self.crew.crew().kickoff(inputs={"dj_set": query_text.strip()})
 
-    def search_soundcloud(self, query_text: str) -> str:
-        """Search for SoundCloud DJ set URL (synchronous).
+    async def search_soundcloud(self, query_text: str) -> str:
+        """Search for SoundCloud DJ set URL (asynchronous).
 
         Args:
             query_text: The search query string
@@ -83,7 +90,8 @@ class SearchService:
         Returns:
             SoundCloud URL
         """
-        return find_soundcloud_djset(query_text)
+        result = await self.soundcloud_handler.find_dj_set_url(query_text)
+        return result or ""
 
 
 def get_search_service() -> SearchService:
