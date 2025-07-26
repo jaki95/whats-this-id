@@ -1,7 +1,10 @@
 """API service for DJ set processor backend."""
 
+from __future__ import annotations
+
 from http import HTTPStatus
 from pathlib import Path
+from typing import Optional
 
 import streamlit as st
 from dj_set_downloader import (
@@ -28,10 +31,10 @@ MIN_ZIP_SIZE = 4  # Minimum bytes needed to validate ZIP signature
 class DJSetProcessorService:
     """Service for managing DJ set processor API operations."""
 
-    _instance: "DJSetProcessorService" | None = None
+    _instance: DJSetProcessorService | None = None
     _initialized: bool = False
 
-    def __new__(cls) -> "DJSetProcessorService":
+    def __new__(cls) -> DJSetProcessorService:
         """Singleton pattern implementation."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -144,7 +147,7 @@ class DJSetProcessorService:
             st.error(f"Error canceling job: {e}")
             return False
 
-    def download_all_tracks(self, job_id: str) -> tuple[bytearray, str] | None:
+    def download_all_tracks(self, job_id: str) -> Optional[tuple[bytearray, str]]:
         """Download all tracks as ZIP with proper error handling.
 
         Args:

@@ -25,7 +25,7 @@ def _check_service_health(api_service: DJSetProcessorService) -> bool:
 
 
 def _submit_processing_job(
-    dj_set_url: str, tracklist: DomainTracklist, api_service
+    dj_set_url: str, tracklist: DomainTracklist, api_service: DJSetProcessorService
 ) -> bool:
     """Submit a new processing job if one isn't already active."""
     if st.session_state.processing_job_id:
@@ -43,7 +43,7 @@ def _submit_processing_job(
         return False
 
 
-def _handle_job_status_update(status, api_service) -> None:
+def _handle_job_status_update(status, api_service: DJSetProcessorService) -> None:
     """Handle different job status states and render appropriate UI."""
     if status.status == "processing":
         # Show progress bar and cancel button
@@ -103,7 +103,7 @@ def progress_tracker():
         st.stop()  # Stop auto-refresh on error
 
 
-def _render_processing_status(status, api_service):
+def _render_processing_status(status, api_service: DJSetProcessorService):
     """Render the processing status with progress bar and cancel button."""
     progress_value = status.progress / 100.0
     st.progress(progress_value, text=f"{status.progress:.1f}% ({status.message})")
