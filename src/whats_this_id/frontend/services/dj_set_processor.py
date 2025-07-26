@@ -2,7 +2,6 @@
 
 from http import HTTPStatus
 from pathlib import Path
-from typing import Optional
 
 import streamlit as st
 from dj_set_downloader import (
@@ -20,21 +19,30 @@ from dj_set_downloader import (
 
 from whats_this_id.frontend.config import AppConfig
 
+# Constants for ZIP file validation
+ZIP_SIGNATURE_1 = b"PK\x03\x04"  # Standard ZIP file signature
+ZIP_SIGNATURE_2 = b"PK\x05\x06"  # Empty ZIP file signature
+MIN_ZIP_SIZE = 4  # Minimum bytes needed to validate ZIP signature
+
 
 class DJSetProcessorService:
     """Service for managing DJ set processor API operations."""
 
-    _instance: Optional["DJSetProcessorService"] = None
+    _instance: "DJSetProcessorService" | None = None
     _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "DJSetProcessorService":
         """Singleton pattern implementation."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, base_url: str = AppConfig.DEFAULT_API_BASE_URL):
-        """Initialize the API service with configuration (only once)."""
+    def __init__(self, base_url: str = AppConfig.DEFAULT_API_BASE_URL) -> None:
+        """Initialize the API service with configuration (only once).
+
+        Args:
+            base_url: Base URL for the DJ set processor API
+        """
         if not self._initialized:
             config = Configuration(host=base_url)
             self.api_client = ApiClient(configuration=config)
@@ -65,8 +73,14 @@ class DJSetProcessorService:
         tracklist: DomainTracklist,
         file_extension: str = AppConfig.DEFAULT_FILE_EXTENSION,
         max_concurrent_tasks: int = AppConfig.DEFAULT_MAX_CONCURRENT_TASKS,
-    ) -> tuple[bool, str, Optional[str]]:
+    ) -> tuple[bool, str, str | None]:
         """Submit a DJ set processing job.
+
+        Args:
+            dj_set_url: URL of the DJ set to process
+            tracklist: Tracklist data for the DJ set
+            file_extension: File extension for downloaded tracks
+            max_concurrent_tasks: Maximum number of concurrent download tasks
 
         Returns:
             Tuple of (success, message, job_id)
@@ -81,18 +95,27 @@ class DJSetProcessorService:
                 )
             )
             if response.status_code != HTTPStatus.OK:
-                st.error(f"Error submitting processing job: {response.status_code}")
-                return (
-                    False,
-                    f"Error submitting processing job: {response.status_code}",
-                    None,
-                )
+                error_msg = f"Error submitting processing job: {response.status_code}"
+                st.error(error_msg)
+                return False, error_msg, None
+
             return True, "Job submitted successfully", response.data.job_id
         except Exception as e:
-            return False, f"Error submitting processing job: {e}", None
+            error_msg = f"Error submitting processing job: {e}"
+            return False, error_msg, None
 
     def get_job_status(self, job_id: str) -> JobStatus | None:
-        """Get the status of a processing job."""
+        """Get the status of a processing job.
+
+        Args:
+            job_id: ID of the job to check
+
+        Returns:
+            JobStatus object if successful, None if failed
+
+        Raises:
+            Exception: If there's an error checking job status
+        """
         try:
             response = self.jobs_api.api_jobs_id_get_with_http_info(job_id)
             if response.status_code != HTTPStatus.OK:
@@ -104,6 +127,9 @@ class DJSetProcessorService:
 
     def cancel_job(self, job_id: str) -> bool:
         """Cancel a processing job.
+
+        Args:
+            job_id: ID of the job to cancel
 
         Returns:
             True if successful, False otherwise
@@ -137,19 +163,11 @@ class DJSetProcessorService:
 
             filename = "tracks.zip"
 
-            # Verify it's a valid ZIP file (starts with PK)
-            if response.data and len(response.data) >= 4:
-                if (
-                    response.data[:4] == b"PK\x03\x04"
-                    or response.data[:4] == b"PK\x05\x06"
-                ):
-                    return response.data, filename
-                else:
-                    st.error("Downloaded file is not a valid ZIP file")
-                    return None
-            else:
-                st.error("Downloaded file is empty or invalid")
+            if not self._is_valid_zip_file(response.data):
+                st.error("Downloaded file is not a valid ZIP file")
                 return None
+
+            return response.data, filename
 
         except Exception as e:
             st.error(f"Error downloading tracks: {e}")
@@ -178,7 +196,6 @@ class DJSetProcessorService:
                 return None
 
             filename = f"track_{track_number}.{AppConfig.DEFAULT_FILE_EXTENSION}"
-
             return response.data, filename
 
         except Exception as e:
@@ -192,7 +209,7 @@ class DJSetProcessorService:
             job_id: The processing job ID
 
         Returns:
-            Dictionary with track information if successful, None if failed
+            JobTracksInfoResponse object if successful, None if failed
         """
         try:
             response = self.downloads_api.api_jobs_id_tracks_get_with_http_info(job_id)
@@ -204,9 +221,30 @@ class DJSetProcessorService:
             st.error(f"Error getting tracks info: {e}")
             return None
 
+    def _is_valid_zip_file(self, file_data: bytes | bytearray | None) -> bool:
+        """Validate if the given data represents a valid ZIP file.
+
+        Args:
+            file_data: The file data to validate
+
+        Returns:
+            True if valid ZIP file, False otherwise
+        """
+        if not file_data or len(file_data) < MIN_ZIP_SIZE:
+            return False
+
+        return file_data[:4] == ZIP_SIGNATURE_1 or file_data[:4] == ZIP_SIGNATURE_2
+
     @staticmethod
     def get_mime_type(filename: str) -> str:
-        """Get MIME type for a file based on its extension."""
+        """Get MIME type for a file based on its extension.
+
+        Args:
+            filename: Name of the file
+
+        Returns:
+            MIME type string
+        """
         extension = Path(filename).suffix.lower()
         mime_types = {
             ".mp3": "audio/mpeg",
@@ -219,26 +257,44 @@ class DJSetProcessorService:
 
     @staticmethod
     def format_file_size(size_bytes: int) -> str:
-        """Format file size in human readable format."""
+        """Format file size in human readable format.
+
+        Args:
+            size_bytes: Size in bytes
+
+        Returns:
+            Formatted size string (e.g., "1.5 MB")
+        """
         if size_bytes == 0:
             return "0 B"
 
         size_names = ["B", "KB", "MB", "GB"]
         i = 0
-        while size_bytes >= 1024 and i < len(size_names) - 1:
-            size_bytes /= 1024.0
+        size = float(size_bytes)
+
+        while size >= 1024 and i < len(size_names) - 1:
+            size /= 1024.0
             i += 1
 
-        return f"{size_bytes:.1f} {size_names[i]}"
+        return f"{size:.1f} {size_names[i]}"
 
 
 def get_dj_set_processor_service() -> DJSetProcessorService:
-    """Get the singleton API service instance."""
+    """Get the singleton API service instance.
+
+    Returns:
+        DJSetProcessorService instance
+    """
     return DJSetProcessorService()
 
 
-def display_api_error(message: str, show_service_hint: bool = True):
-    """Display a consistent API error message."""
+def display_api_error(message: str, show_service_hint: bool = True) -> None:
+    """Display a consistent API error message.
+
+    Args:
+        message: Error message to display
+        show_service_hint: Whether to show service connection hint
+    """
     st.error(message)
     if show_service_hint:
         st.error(
