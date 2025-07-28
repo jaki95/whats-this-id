@@ -2,7 +2,8 @@ tracklist_search_task:
   description: >
     Find the tracklist for the dj set {dj_set}
   expected_output: >
-    A structured tracklist of the dj set. 
+    A structured tracklist of the dj set. Ensure you return the pydantic model
+    DomainTracklist.
     You must use the following websites to find the tracklist, following 
     the order of the list:
     - 1001tracklists.com
