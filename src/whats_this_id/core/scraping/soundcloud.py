@@ -12,10 +12,10 @@ class SoundCloudHandler:
     async def find_dj_set_url(self, dj_set: str) -> str | None:
         """
         Find a SoundCloud URL for the given DJ set query.
-        
+
         Args:
             dj_set: The search query for the DJ set
-            
+
         Returns:
             SoundCloud URL if found, None otherwise
         """
