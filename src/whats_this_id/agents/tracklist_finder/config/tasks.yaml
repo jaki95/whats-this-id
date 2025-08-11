@@ -2,7 +2,8 @@ tracklist_search_task:
   description: >
     Find the tracklist for the dj set {dj_set}
   expected_output: >
-    A structured tracklist of the dj set. 
+    A structured tracklist of the dj set. Ensure you return the pydantic model
+    DomainTracklist.
     You must use the following websites to find the tracklist, following 
     the order of the list:
     - 1001tracklists.com
@@ -14,6 +15,7 @@ tracklist_search_task:
     the tracklist that is not filled with a track.
     Sometimes the first track will have a blank instead of the 00:00 timestamp.
     In this case, you must fill it with the 00:00 timestamp.
+    A track must always have a start and end timestamp.
     If two tracks have the same timestamp, there either is no information on 
     the transition or there is uncertainty about the right track. In this case,
     make an informed decision based on context and length of gap.

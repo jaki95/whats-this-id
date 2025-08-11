@@ -2,7 +2,9 @@
 
 import streamlit as st
 
-from whats_this_id.frontend.components.dj_set_processor import render_processing_section
+from whats_this_id.frontend.components.processing_controls import (
+    render_processing_controls,
+)
 from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
 from whats_this_id.frontend.config import AppConfig
 
@@ -21,4 +23,4 @@ def render_results_section():
         render_tracklist_display(tracklist)
 
     with col2:
-        render_processing_section()
+        render_processing_controls()

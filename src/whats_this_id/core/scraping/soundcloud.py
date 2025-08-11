@@ -1,30 +1,29 @@
-import asyncio
-from pathlib import Path
-
-from sclib import SoundcloudAPI
-
-from whats_this_id.core.scraping.google import extract_google_search_links
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = PROJECT_ROOT / "data"
-DATA_DIR.mkdir(exist_ok=True)
+from whats_this_id.core.scraping.google import GoogleHandler
 
 
-def find_soundcloud_djset(dj_set: str) -> str:
-    """Return a SoundCloud URL for the given *dj_set* query."""
-    soundcloud_url = asyncio.run(extract_google_search_links("soundcloud.com", dj_set))
-    return soundcloud_url or ""
+class SoundCloudHandler:
+    """Handles SoundCloud DJ set URL finding."""
 
+    DEFAULT_SEARCH_SITE = "soundcloud.com"
 
-def download_soundcloud_djset(url: str) -> None:
-    """Download the DJ set MP3 from *url* into the local `data/` directory."""
-    api = SoundcloudAPI()
-    track = api.resolve(url)
-    filename = DATA_DIR / f"{track.title}.mp3"
-    with open(filename, "wb+") as file:
-        track.write_mp3_to(file)
+    def __init__(self):
+        self.google_handler = GoogleHandler()
 
+    async def find_dj_set_url(self, dj_set: str) -> str | None:
+        """
+        Find a SoundCloud URL for the given DJ set query.
 
-if __name__ == "__main__":
-    # Example usage
-    download_soundcloud_djset(find_soundcloud_djset("dax j chlar stone"))
+        Args:
+            dj_set: The search query for the DJ set
+
+        Returns:
+            SoundCloud URL if found, None otherwise
+        """
+        try:
+            soundcloud_url = await self.google_handler.search_for_tracklist_link(
+                self.DEFAULT_SEARCH_SITE, dj_set
+            )
+            return soundcloud_url
+        except Exception as e:
+            print(f"Error finding SoundCloud DJ set '{dj_set}': {e}")
+            return None

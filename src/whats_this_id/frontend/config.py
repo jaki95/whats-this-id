@@ -25,7 +25,7 @@ class AppConfig:
     # UI Constants
     SEARCH_PLACEHOLDER = "Enter your tracklist search query:"
     SEARCH_BUTTON_TEXT = "Search Tracklists"
-    SEARCH_SPINNER_TEXT = "🤖 AI agents are searching for tracklists and SoundCloud..."
+    SEARCH_SPINNER_TEXT = "🤖 AI agents are searching for tracklists..."
 
     # Layout
     TRACKLIST_RESULTS_COLUMNS = [2, 1]  # [tracklist_display, processing_section]
