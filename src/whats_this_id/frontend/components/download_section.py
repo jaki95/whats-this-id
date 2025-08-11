@@ -67,17 +67,25 @@ def _render_tracks_download_options(
                 result = processor_service.download_all_tracks(job_id)
                 if result:
                     file_data, original_filename = result
-                    if hasattr(st.session_state, 'tracklist') and st.session_state.tracklist:
+                    if (
+                        hasattr(st.session_state, "tracklist")
+                        and st.session_state.tracklist
+                    ):
                         tracklist_name = st.session_state.tracklist.name
                     if tracklist_name:
-                        safe_name = "".join(
-                            c for c in tracklist_name 
-                            if c.isalnum() or c in (" ", "-", "_")
-                        ).strip().replace(" ", "_")
+                        safe_name = (
+                            "".join(
+                                c
+                                for c in tracklist_name
+                                if c.isalnum() or c in (" ", "-", "_")
+                            )
+                            .strip()
+                            .replace(" ", "_")
+                        )
                         new_filename = f"{safe_name}.zip"
                     else:
                         new_filename = original_filename
-                    
+
                     st.session_state[zip_data_key] = (file_data, new_filename)
                     st.rerun()
 
