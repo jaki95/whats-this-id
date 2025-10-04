@@ -9,7 +9,7 @@ from crawl4ai import (
 )
 from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 
-from whats_this_id.core.scraping.config import browser_config
+from whats_this_id.core.config import BROWSER_CONFIG
 
 
 class GoogleSearchResult:
@@ -85,7 +85,7 @@ class GoogleHandler:
         self, search_url: str, config: CrawlerRunConfig
     ) -> list[GoogleSearchResult] | None:
         """Perform a single search attempt."""
-        async with AsyncWebCrawler(config=browser_config) as crawler:
+        async with AsyncWebCrawler(config=BROWSER_CONFIG) as crawler:
             result = await asyncio.wait_for(
                 crawler.arun(url=search_url, config=config), timeout=self.timeout
             )
