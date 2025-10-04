@@ -1,7 +1,6 @@
 """Unit tests for parsers."""
 
 import pytest
-from dj_set_downloader.models.domain_track import DomainTrack
 
 from whats_this_id.core.parsers.base import Parser
 from whats_this_id.core.parsers.parser import Parser as HTMLParser
