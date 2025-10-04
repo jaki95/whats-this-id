@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from whats_this_id.core.common import SearchRun, log_step
+from whats_this_id.core.common import SearchRun, log_step, DomainTracklist, DomainTrack
 from whats_this_id.core.config import SEARCH_CONFIG
 from whats_this_id.core.fetchers.fetcher import Fetcher
 from whats_this_id.core.parsers.parser import Parser
@@ -197,14 +197,11 @@ class TracklistManager:
                 "no_results",
                 details="No tracklists to merge",
             )
-            # Initialize empty tracklist if none were parsed
-            from dj_set_downloader.models.domain_tracklist import DomainTracklist
-
             run.final_tracklist = DomainTracklist()
             return
 
         # Combine all tracks and deduplicate by title
-        all_tracks = []
+        all_tracks: list[DomainTrack] = []
         total_confidence = 0.0
 
         for tracks, confidence in parsed_tracklists:
@@ -216,9 +213,7 @@ class TracklistManager:
         unique_tracks = []
 
         for track in all_tracks:
-            title_lower = (
-                track.name.lower() if hasattr(track, "title") else str(track).lower()
-            )
+            title_lower = track.name.lower()
             if title_lower not in seen_titles:
                 seen_titles.add(title_lower)
                 unique_tracks.append(track)
@@ -232,9 +227,6 @@ class TracklistManager:
             )
         except:
             pass  # If sorting fails, keep original order
-
-        # Create a DomainTracklist object with the unique tracks
-        from whats_this_id.core.common import DomainTracklist
 
         avg_confidence = (
             total_confidence / len(parsed_tracklists) if parsed_tracklists else 0.0
