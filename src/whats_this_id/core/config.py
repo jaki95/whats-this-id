@@ -1,8 +1,9 @@
 """
 Unified configuration for the core module.
 """
+
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from crawl4ai import (
     BrowserConfig,
@@ -30,8 +31,8 @@ BROWSER_CONFIG = BrowserConfig(
         "--disable-backgrounding-occluded-windows",
         "--disable-renderer-backgrounding",
         "--disable-web-security",
-        "--disable-features=VizDisplayCompositor"
-    ]
+        "--disable-features=VizDisplayCompositor",
+    ],
 )
 
 # Content filtering

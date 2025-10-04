@@ -1,29 +1,41 @@
 """
-Unified search module that handles all search operations.
+Search strategies and result models.
 """
+
 import json
+from abc import ABC, abstractmethod
 from typing import List, Optional
 from urllib.parse import quote
 
 from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig
 from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 
-from whats_this_id.core.common import BaseOperation, ExecutionResult
+from whats_this_id.core.common import BaseOperation
 from whats_this_id.core.config import BROWSER_CONFIG, GOOGLE_SEARCH_SCHEMA
 
 
 class SearchResult:
     """Represents a single search result."""
-    
-    def __init__(self, title: str, link: str, snippet: str = ""):
+
+    def __init__(self, url: str, title: str, snippet: str = ""):
+        self.url = url
+        self.link = url  # Alias for backward compatibility
         self.title = title
-        self.link = link
         self.snippet = snippet
+
+
+class SearchStrategy(ABC):
+    """Abstract base class for search strategies."""
+
+    @abstractmethod
+    def search(self, query: str) -> List[SearchResult]:
+        """Search for tracklists using the given query."""
+        pass
 
 
 class Searcher(BaseOperation):
     """Unified search that handles Google searches with site restrictions."""
-    
+
     def __init__(self, timeout: int = 30, max_retries: int = 3):
         super().__init__("Searcher", timeout, max_retries)
 
@@ -48,9 +60,7 @@ class Searcher(BaseOperation):
             data = json.loads(extracted_content)
             results = [
                 SearchResult(
-                    title=entry.get("title", ""),
-                    link=entry.get("link", ""),
-                    snippet=""
+                    url=entry.get("link", ""), title=entry.get("title", ""), snippet=""
                 )
                 for entry in data
                 if "title" in entry and "link" in entry
@@ -59,11 +69,13 @@ class Searcher(BaseOperation):
         except (json.JSONDecodeError, KeyError) as e:
             raise Exception(f"Failed to parse search results: {e}")
 
-    def _find_matching_result(self, results: List[SearchResult], website: str) -> Optional[str]:
+    def _find_matching_result(
+        self, results: List[SearchResult], website: str
+    ) -> Optional[str]:
         """Find the first result that matches the target website."""
         for result in results:
-            if website in result.link:
-                return result.link
+            if website in result.url:
+                return result.url
         return None
 
     async def _execute_async(self, website: str, query: str) -> Optional[str]:
@@ -88,11 +100,13 @@ class Searcher(BaseOperation):
     def search_tracklist1001(self, query: str) -> List[SearchResult]:
         """Search for tracklists on 1001tracklists.com."""
         result = self.execute("1001tracklists.com", query)
-        
+
         if result.success and result.data:
-            return [SearchResult(
-                title=f"Tracklist: {query}",
-                link=result.data,
-                snippet=f"Found tracklist on 1001tracklists.com"
-            )]
+            return [
+                SearchResult(
+                    url=result.data,
+                    title=f"Tracklist: {query}",
+                    snippet="Found tracklist on 1001tracklists.com",
+                )
+            ]
         return []
