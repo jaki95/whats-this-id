@@ -1,6 +1,6 @@
 """Unit tests for parsers."""
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from dj_set_downloader.models.domain_track import DomainTrack

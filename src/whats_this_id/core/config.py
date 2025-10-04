@@ -3,7 +3,6 @@ Unified configuration for the core module.
 """
 
 from pathlib import Path
-from typing import Any, Dict
 
 from crawl4ai import (
     BrowserConfig,

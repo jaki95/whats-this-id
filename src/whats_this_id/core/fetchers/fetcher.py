@@ -3,11 +3,10 @@ Unified fetcher that handles all content fetching operations.
 """
 
 import logging
-from typing import Optional
 
 from crawl4ai import AsyncWebCrawler
 
-from whats_this_id.core.common import BaseOperation, ExecutionResult
+from whats_this_id.core.common import BaseOperation
 from whats_this_id.core.config import BROWSER_CONFIG, CRAWLER_CONFIG
 from whats_this_id.core.cookie_refresh import CookieRefreshService
 

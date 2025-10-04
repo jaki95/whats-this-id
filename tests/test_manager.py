@@ -1,9 +1,8 @@
 """Unit tests for TracklistSearchManager."""
 
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
-import pytest
 from dj_set_downloader.models.domain_track import DomainTrack
 
 from whats_this_id.core.common import SearchRun, StepLog

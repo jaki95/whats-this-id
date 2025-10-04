@@ -225,7 +225,8 @@ class TracklistManager:
                 if getattr(t, "track_number", None) is not None
                 else 999
             )
-        except:
+        except Exception as e:
+            logger.warning(f"Error sorting tracks: {e}, keeping original order")
             pass  # If sorting fails, keep original order
 
         avg_confidence = (

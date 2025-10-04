@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from dj_set_downloader.models.domain_track import DomainTrack
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
 from pydantic import BaseModel, Field
 

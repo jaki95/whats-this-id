@@ -8,7 +8,7 @@ from typing import Any, List, Tuple
 from bs4 import BeautifulSoup
 from dj_set_downloader.models.domain_tracklist import DomainTrack
 
-from whats_this_id.core.common import BaseOperation, ExecutionResult
+from whats_this_id.core.common import BaseOperation
 
 
 class Parser(BaseOperation):

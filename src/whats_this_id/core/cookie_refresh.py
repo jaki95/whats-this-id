@@ -4,14 +4,12 @@ Cookie refresh service for handling session updates when websites block requests
 
 import asyncio
 import logging
-import subprocess
 import time
-from pathlib import Path
 from typing import List, Optional
 
 from crawl4ai import AsyncWebCrawler
 
-from whats_this_id.core.config import BROWSER_CACHE_DIR, BROWSER_CONFIG
+from whats_this_id.core.config import BROWSER_CACHE_DIR
 
 logger = logging.getLogger(__name__)
 
