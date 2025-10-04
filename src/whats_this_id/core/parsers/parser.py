@@ -1,376 +1,290 @@
 """
-Unified parser that handles all content parsing operations.
+Parser that handles all content parsing operations.
 """
 
 import re
-from typing import Any, List, Tuple
+from typing import Any
 
 from bs4 import BeautifulSoup
-from dj_set_downloader.models.domain_tracklist import DomainTrack
+from dj_set_downloader.models.domain_track import DomainTrack
 
-from whats_this_id.core.common import BaseOperation
+from whats_this_id.core.common import BaseOperation, logger
+
+# Constants for track extraction patterns
+TRACKLIST_PATTERNS = {
+    "tlp_item": re.compile(r"tlpItem", re.I),
+    "track_elements": re.compile(r"track|song|item", re.I),
+    "tlp_id": re.compile(r"tlp_\d+", re.I),
+    "suggestion_id": re.compile(r"sug\d+_value"),
+}
+
+# Text cleaning patterns
+CLEANUP_PATTERNS = {
+    "label_and_numbers": re.compile(r"\s+[A-Z\s]{4,}\s+\d+.*$"),
+    "brackets": re.compile(r"\s*\[.*?\]\s*$"),
+    "parentheses": re.compile(r"\s*\(.*?\)\s*$"),
+    "edit_info": re.compile(r"\s+[A-Z]+\s+\[.*?\].*$"),
+    "user_info": re.compile(r"\s+\d+\s+[a-zA-Z0-9()\s]+\s+Save.*$"),
+    "track_number_time": re.compile(r"^\d+\s+\d+:\d+(?::\d+)?\s+"),
+    "track_number": re.compile(r"^\d+\s+"),
+}
+
+# Skip words for text filtering
+SKIP_WORDS = {"copyright", "rights", "reserved", "tracklist", "playlist"}
 
 
 class Parser(BaseOperation):
-    """Unified parser that handles tracklist parsing using HTML parsing."""
+    """Parser that handles tracklist parsing using HTML parsing."""
 
-    def __init__(
-        self, model: str = "gpt-4o-mini", timeout: int = 15, max_retries: int = 3
-    ):
+    def __init__(self, timeout: int = 15, max_retries: int = 3):
         super().__init__("Parser", timeout, max_retries)
-        self.model = model  # Keep for future LLM implementation
 
     def supports(self, content_type: str) -> bool:
         """Check if this parser supports the given content type."""
         return content_type == "html"
 
-    async def _execute_async(self, content: str) -> Tuple[List[Any], float]:
+    async def _execute_async(self, content: str) -> list[DomainTrack]:
         """Parse tracklist from HTML content using HTML parsing."""
-        print(
-            f"🔍 Parser: Starting HTML parsing with {len(content)} characters of content..."
-        )
+        logger.info(f"Parser: Starting HTML parsing with {len(content)} characters...")
 
         try:
-            # Parse HTML content
             soup = BeautifulSoup(content, "html.parser")
-
-            # Look for common tracklist patterns
             tracks = self._extract_tracks_from_html(soup)
 
-            confidence = self._calculate_confidence(tracks, content)
-
-            print(
-                f"✅ Parser: Extracted {len(tracks)} tracks with confidence {confidence:.2f}"
-            )
-            return tracks, confidence
+            logger.info(f"Parser: Extracted {len(tracks)} tracks.")
+            return tracks
 
         except Exception as e:
-            print(f"❌ Parser: HTML parsing failed: {e}")
+            logger.error(f"Parser: HTML parsing failed: {e}")
             raise
 
-    def _extract_tracks_from_html(self, soup: BeautifulSoup) -> List[Any]:
-        """Extract tracks from parsed HTML."""
+    def _extract_tracks_from_html(self, soup: BeautifulSoup) -> list[Any]:
+        """Extract tracks from parsed HTML using multiple patterns."""
         tracks = []
 
-        # 1001tracklists.com specific patterns
-        # Pattern 1: Look for tlpItem elements (main tracklist items)
-        tlp_elements = soup.find_all("div", class_=re.compile(r"tlpItem", re.I))
-        print(f"🔍 Found {len(tlp_elements)} tlpItem elements")
+        # Try different extraction patterns in order of specificity
+        extraction_patterns = [
+            ("tlpItem elements", lambda: self._extract_from_tlp_items(soup)),
+            ("track elements", lambda: self._extract_from_track_elements(soup)),
+            ("tlp ID elements", lambda: self._extract_from_tlp_ids(soup)),
+            ("text patterns", lambda: self._extract_from_text_patterns(soup)),
+        ]
 
-        for element in tlp_elements:
-            track_info = self._extract_track_info_from_tlp_element(element, soup)
-            if track_info:
-                tracks.append(track_info)
+        for pattern_name, extract_func in extraction_patterns:
+            if not tracks:
+                pattern_tracks = extract_func()
+                if pattern_tracks:
+                    tracks.extend(pattern_tracks)
+                    logger.info(f"Found {len(pattern_tracks)} tracks using {pattern_name}")
 
         # Sort tracks by track number
         tracks.sort(key=lambda x: x.track_number if x.track_number is not None else 999)
-
-        # Pattern 2: Look for other track-related elements
-        if not tracks:
-            track_elements = soup.find_all(
-                ["div", "li", "tr"], class_=re.compile(r"track|song|item", re.I)
-            )
-            print(f"🔍 Found {len(track_elements)} other track elements")
-
-            for element in track_elements:
-                track_info = self._extract_track_info(element)
-                if track_info:
-                    tracks.append(track_info)
-
-        # Pattern 3: Look for elements with tlp_ class (specific track IDs)
-        if not tracks:
-            tlp_id_elements = soup.find_all("div", class_=re.compile(r"tlp_\d+", re.I))
-            print(f"🔍 Found {len(tlp_id_elements)} tlp_ elements")
-
-            for element in tlp_id_elements:
-                track_info = self._extract_track_info_from_tlp_element(element)
-                if track_info:
-                    tracks.append(track_info)
-
-        # Pattern 4: Look for any text that looks like "Artist - Track"
-        if not tracks:
-            all_text = soup.get_text()
-            lines = all_text.split("\n")
-            for line in lines:
-                line = line.strip()
-                if " - " in line and len(line) > 10 and len(line) < 200:
-                    track_info = self._extract_track_info_from_text(line)
-                    if track_info:
-                        tracks.append(track_info)
-
         return tracks
+
+    def _extract_from_tlp_items(self, soup: BeautifulSoup) -> list[Any]:
+        """Extract tracks from tlpItem elements."""
+        elements = soup.find_all("div", class_=TRACKLIST_PATTERNS["tlp_item"])
+        return [
+            self._extract_track_info_from_tlp_element(el, soup) for el in elements if el
+        ]
+
+    def _extract_from_track_elements(self, soup: BeautifulSoup) -> list[Any]:
+        """Extract tracks from generic track elements."""
+        elements = soup.find_all(
+            ["div", "li", "tr"], class_=TRACKLIST_PATTERNS["track_elements"]
+        )
+        return [self._extract_track_info(el) for el in elements if el]
+
+    def _extract_from_tlp_ids(self, soup: BeautifulSoup) -> list[Any]:
+        """Extract tracks from tlp ID elements."""
+        elements = soup.find_all("div", class_=TRACKLIST_PATTERNS["tlp_id"])
+        return [self._extract_track_info_from_tlp_element(el) for el in elements if el]
+
+    def _extract_from_text_patterns(self, soup: BeautifulSoup) -> list[Any]:
+        """Extract tracks from text patterns."""
+        all_text = soup.get_text()
+        lines = [line.strip() for line in all_text.split("\n")]
+        return [
+            self._extract_track_info_from_text(line)
+            for line in lines
+            if " - " in line and 10 < len(line) < 200
+        ]
 
     def _extract_track_info(self, element) -> Any:
         """Extract track information from a single element."""
         text = element.get_text(strip=True)
-
-        # Skip empty or very short text
         if len(text) < 5:
             return None
 
-        # Look for patterns like "Artist - Track" or "Track by Artist"
-        # This is a simple implementation - can be enhanced later
-        if " - " in text or " by " in text:
-            if " - " in text:
-                parts = text.split(" - ", 1)
-                artist = parts[0].strip()
-                track = parts[1].strip()
-            else:
-                parts = text.split(" by ", 1)
-                track = parts[0].strip()
-                artist = parts[1].strip() if len(parts) > 1 else ""
+        return self._parse_artist_track_text(text)
 
-            return DomainTrack(
-                name=track,
-                artist=artist,
-                available=False,
-                download_url=None,
-                end_time=None,
-                size_bytes=None,
-                start_time=None,
-                track_number=None,
-            )
+    def _parse_artist_track_text(self, text: str) -> DomainTrack | None:
+        """Parse artist and track from text with ' - ' or ' by ' separators."""
+        if " - " in text:
+            parts = text.split(" - ", 1)
+            artist, track = parts[0].strip(), parts[1].strip()
+        elif " by " in text:
+            parts = text.split(" by ", 1)
+            track, artist = parts[0].strip(), parts[1].strip() if len(parts) > 1 else ""
+        else:
+            return None
 
-        return None
+        return self._create_domain_track(track, artist)
 
-    def _extract_track_info_from_tlp_element(self, element, soup) -> Any:
+    def _create_domain_track(
+        self,
+        track: str,
+        artist: str,
+        track_number: int | None = None,
+        start_time: str | None = None,
+    ) -> DomainTrack:
+        """Create a DomainTrack object with common defaults."""
+        return DomainTrack(
+            name=track,
+            artist=artist,
+            available=False,
+            download_url=None,
+            end_time=None,
+            size_bytes=None,
+            start_time=start_time,
+            track_number=track_number,
+        )
+
+    def _extract_track_info_from_tlp_element(self, element, soup=None) -> Any:
         """Extract track information from a tlpItem element."""
         text = element.get_text()
-
-        # Skip empty or very short text
         if len(text) < 5:
             return None
 
-        # Extract track number and start time
         track_number, start_time = self._extract_track_number_and_time(text)
 
-        # Check if this is an ID track (unreleased track)
-        is_id_track = (
+        if self._is_id_track(element, text):
+            return self._handle_id_track(element, soup, track_number, start_time)
+
+        return self._parse_regular_track(text, track_number, start_time)
+
+    def _is_id_track(self, element, text: str) -> bool:
+        """Check if this is an ID track (unreleased track)."""
+        return (
             element.get("data-isid") == "true"
             or "id - id" in text.lower()
             or " - id" in text.lower()
         )
 
-        if is_id_track:
-            # This is an ID track - look for suggestions
-            suggestion = self._find_suggestion_for_id_track(element, soup)
-            if suggestion:
-                # Use the suggestion
-                artist, track = suggestion
-                return DomainTrack(
-                    name=track,
-                    artist=artist,
-                    available=False,
-                    download_url=None,
-                    end_time=None,
-                    size_bytes=None,
-                    start_time=start_time,
-                    track_number=track_number,
-                )
-            else:
-                # No suggestion found, use "ID - ID"
-                return DomainTrack(
-                    name="ID",
-                    artist="ID",
-                    available=False,
-                    download_url=None,
-                    end_time=None,
-                    size_bytes=None,
-                    start_time=start_time,
-                    track_number=track_number,
-                )
+    def _handle_id_track(
+        self, element, soup, track_number: int | None, start_time: str | None
+    ) -> DomainTrack:
+        """Handle ID track extraction with suggestions."""
+        suggestion = self._find_suggestion_for_id_track(element, soup) if soup else None
+        if suggestion:
+            artist, track = suggestion
+            return self._create_domain_track(track, artist, track_number, start_time)
+        else:
+            return self._create_domain_track("ID", "ID", track_number, start_time)
 
-        # Regular track parsing
-        # The format is typically: "01 02:30 Artist - Track Label info"
-        if " - " in text:
-            parts = text.split(" - ")
-            if len(parts) >= 2:
-                # The track is everything after the first ' - '
-                track_part = parts[1].strip()
+    def _parse_regular_track(
+        self, text: str, track_number: int | None, start_time: str | None
+    ) -> DomainTrack | None:
+        """Parse regular track from text."""
+        if " - " not in text:
+            return None
 
-                # Clean up the track (remove label, extra info)
-                # Be more careful about what we remove - don't remove single letters like "I"
-                track = re.sub(
-                    r"\s+[A-Z\s]{4,}\s+\d+.*$", "", track_part
-                )  # Remove label and numbers at end (only if label is 4+ chars)
-                track = re.sub(r"\s*\[.*?\]\s*$", "", track)  # Remove [label] info
-                track = re.sub(r"\s*\(.*?\)\s*$", "", track)  # Remove (info)
-                # Remove extra text that appears after the track name (like "OFUNSOUNDMIND  [edit?]     11    ewwcolton (19k)                 Save 10")
-                track = re.sub(
-                    r"\s+[A-Z]+\s+\[.*?\].*$", "", track
-                )  # Remove text like "OFUNSOUNDMIND  [edit?] ..."
-                track = re.sub(
-                    r"\s+\d+\s+[a-zA-Z0-9()\s]+\s+Save.*$", "", track
-                )  # Remove text like "11    ewwcolton (19k)                 Save 10"
-                track = track.strip()
+        parts = text.split(" - ", 1)
+        if len(parts) < 2:
+            return None
 
-                # The artist is in the part before the first ' - '
-                artist_part = parts[0].strip()
+        track = self._clean_track_name(parts[1].strip())
+        artist = self._clean_artist_name(parts[0].strip())
 
-                # Remove track number and timestamp from the beginning
-                # Pattern: "01 02:30 Artist" or "01 Artist" or "25 2:01:30 Artist"
-                artist = re.sub(
-                    r"^\d+\s+\d+:\d+(?::\d+)?\s+", "", artist_part
-                )  # Remove "01 02:30 " or "25 2:01:30 "
-                artist = re.sub(r"^\d+\s+", "", artist)  # Remove "01 "
-                artist = artist.strip()
-
-                # Skip if too short
-                if len(artist) > 1 and len(track) > 1:
-                    return DomainTrack(
-                        name=track,
-                        artist=artist,
-                        available=False,
-                        download_url=None,
-                        end_time=None,
-                        size_bytes=None,
-                        start_time=start_time,
-                        track_number=track_number,
-                    )
-
+        if len(artist) > 1 and len(track) > 1:
+            return self._create_domain_track(track, artist, track_number, start_time)
         return None
 
-    def _extract_track_number_and_time(self, text: str) -> tuple:
+    def _clean_track_name(self, track_part: str) -> str:
+        """Clean track name by removing labels and extra info."""
+        track = track_part
+        for pattern in [
+            CLEANUP_PATTERNS["label_and_numbers"],
+            CLEANUP_PATTERNS["brackets"],
+            CLEANUP_PATTERNS["parentheses"],
+            CLEANUP_PATTERNS["edit_info"],
+            CLEANUP_PATTERNS["user_info"],
+        ]:
+            track = pattern.sub("", track)
+        return track.strip()
+
+    def _clean_artist_name(self, artist_part: str) -> str:
+        """Clean artist name by removing track numbers and timestamps."""
+        artist = artist_part
+        for pattern in [
+            CLEANUP_PATTERNS["track_number_time"],
+            CLEANUP_PATTERNS["track_number"],
+        ]:
+            artist = pattern.sub("", artist)
+        return artist.strip()
+
+    def _extract_track_number_and_time(
+        self, text: str
+    ) -> tuple[int | None, str | None]:
         """Extract track number and start time from text."""
         track_number = None
         start_time = None
 
-        # Look for track number pattern: "01", "02", etc.
-        # Pattern: "01        ID - ID" or "02   02:30      Artist - Track"
+        # Extract track number: "01", "02", etc.
         track_match = re.search(r"^\s*(\d+)\s+", text)
         if track_match:
             track_number = int(track_match.group(1))
 
-        # Look for time pattern: "02:30", "08:12", "2:01:30", etc.
-        # Pattern: "02   02:30      Artist - Track"
+        # Extract time: "02:30", "08:12", "2:01:30", etc.
         time_match = re.search(r"^\s*\d+\s+(\d+:\d+(?::\d+)?)\s+", text)
         if time_match:
             start_time = time_match.group(1)
 
         return track_number, start_time
 
-    def _find_suggestion_for_id_track(self, element, soup) -> tuple:
+    def _find_suggestion_for_id_track(self, element, soup) -> tuple[str, str] | None:
         """Find suggestion for an ID track."""
-        # Get the track ID from the element
         track_id = element.get("data-id")
         if not track_id:
             return None
 
-        # Look for suggestion container with class tlp_<track_id> in the full HTML
+        # Look in suggestion container
         suggestion_container = soup.find("div", class_=re.compile(f"tlp_{track_id}"))
-
         if suggestion_container:
-            # Find the suggestion within this container
-            suggestion = suggestion_container.find(
-                "div", id=re.compile(r"sug\d+_value")
-            )
+            suggestion = self._extract_suggestion_from_element(suggestion_container)
             if suggestion:
-                suggestion_text = suggestion.get_text().strip()
-                if " - " in suggestion_text:
-                    parts = suggestion_text.split(" - ", 1)
-                    artist = parts[0].strip()
-                    track = parts[1].strip()
+                return suggestion
 
-                    # Clean up the track (remove label info)
-                    track = re.sub(r"\s*\[.*?\]\s*$", "", track)  # Remove [label] info
-                    track = track.strip()
-
-                    return artist, track
-
-        # Look for suggestion elements in siblings
-        siblings = element.find_next_siblings()
-        for sibling in siblings:
-            suggestions = sibling.find_all("div", id=re.compile(r"sug\d+_value"))
+        # Look in sibling elements
+        for sibling in element.find_next_siblings():
+            suggestions = sibling.find_all(
+                "div", id=TRACKLIST_PATTERNS["suggestion_id"]
+            )
             if suggestions:
-                suggestion_text = suggestions[0].get_text().strip()
-                if " - " in suggestion_text:
-                    parts = suggestion_text.split(" - ", 1)
-                    artist = parts[0].strip()
-                    track = parts[1].strip()
-
-                    # Clean up the track (remove label info)
-                    track = re.sub(r"\s*\[.*?\]\s*$", "", track)  # Remove [label] info
-                    track = track.strip()
-
-                    return artist, track
+                suggestion = self._extract_suggestion_from_element(suggestions[0])
+                if suggestion:
+                    return suggestion
 
         return None
+
+    def _extract_suggestion_from_element(self, element) -> tuple[str, str] | None:
+        """Extract artist and track from suggestion element."""
+        suggestion_text = element.get_text().strip()
+        if " - " not in suggestion_text:
+            return None
+
+        parts = suggestion_text.split(" - ", 1)
+        artist = parts[0].strip()
+        track = CLEANUP_PATTERNS["brackets"].sub("", parts[1].strip()).strip()
+        return artist, track
 
     def _extract_track_info_from_text(self, text: str) -> Any:
         """Extract track information from text."""
-        # Skip empty or very short text
         if len(text) < 5:
             return None
 
-        # Look for patterns like "Artist - Track" or "Track by Artist"
-        if " - " in text or " by " in text:
-            # Filter out obvious non-track text
-            if any(
-                skip_word in text.lower()
-                for skip_word in [
-                    "copyright",
-                    "rights",
-                    "reserved",
-                    "tracklist",
-                    "playlist",
-                ]
-            ):
-                return None
+        # Filter out obvious non-track text
+        if any(skip_word in text.lower() for skip_word in SKIP_WORDS):
+            return None
 
-            if " - " in text:
-                parts = text.split(" - ", 1)
-                artist = parts[0].strip()
-                track = parts[1].strip()
-            else:
-                parts = text.split(" by ", 1)
-                track = parts[0].strip()
-                artist = parts[1].strip() if len(parts) > 1 else ""
-
-            return DomainTrack(
-                name=track,
-                artist=artist,
-                available=False,
-                download_url=None,
-                end_time=None,
-                size_bytes=None,
-                start_time=None,
-                track_number=None,
-            )
-
-        return None
-
-    def _calculate_confidence(self, tracks: List[Any], content: str) -> float:
-        """Calculate confidence based on track count and content quality."""
-        if not tracks:
-            return 0.0
-
-        # Base confidence on track count
-        track_count = len(tracks)
-        if track_count >= 10:
-            base_confidence = 0.9
-        elif track_count >= 5:
-            base_confidence = 0.7
-        elif track_count >= 2:
-            base_confidence = 0.5
-        else:
-            base_confidence = 0.3
-
-        # Adjust based on content length (more content = higher confidence)
-        content_length = len(content)
-        if content_length > 5000:
-            length_factor = 1.0
-        elif content_length > 2000:
-            length_factor = 0.9
-        elif content_length > 1000:
-            length_factor = 0.8
-        else:
-            length_factor = 0.6
-
-        return min(1.0, base_confidence * length_factor)
-
-    def parse(self, content: str) -> Tuple[List[Any], float]:
-        """Synchronous parse method for backward compatibility."""
-        result = self.execute(content)
-        if result.success:
-            return result.data
-        return [], 0.0
+        return self._parse_artist_track_text(text)

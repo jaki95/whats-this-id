@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class Fetcher(BaseOperation):
     """Unified fetcher that handles HTML content fetching."""
 
-    def __init__(self, timeout: int = 30, max_retries: int = 1):  # Reduced to 1 retry
+    def __init__(self, timeout: int = 30, max_retries: int = 1):
         super().__init__("Fetcher", timeout, max_retries)
         self.name = "html"
         self.content_type = "html"
