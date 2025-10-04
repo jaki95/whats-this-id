@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
+from dj_set_downloader.models.domain_track import DomainTrack
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
