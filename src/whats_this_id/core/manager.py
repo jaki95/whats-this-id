@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from whats_this_id.core.common import DomainTracklist, DomainTrack, SearchRun, log_step
+from whats_this_id.core.common import DomainTrack, DomainTracklist, SearchRun, log_step
 from whats_this_id.core.config import SEARCH_CONFIG
 from whats_this_id.core.fetchers.fetcher import Fetcher
 from whats_this_id.core.parsers.parser import Parser
