@@ -265,7 +265,7 @@ class TracklistManager:
 
         # Store the total duration in the run for later use
         if total_duration:
-            run.total_duration_ms = self._duration_to_ms(total_duration)
+            run.tracklist_duration_ms = self._duration_to_ms(total_duration)
 
         # Create DomainTracklist with extracted metadata
         tracklist_kwargs = {
