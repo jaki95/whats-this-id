@@ -43,7 +43,13 @@ class TestHTMLParser:
         result = parser.execute("")
         
         assert result.success is True
-        assert result.data == []
+        # result.data is now a tuple (tracks, total_duration, metadata)
+        tracks, total_duration, metadata = result.data
+        assert tracks == []
+        assert total_duration is None
+        assert isinstance(metadata, dict)
+        assert metadata["name"] is None
+        assert metadata["artist"] is None
 
     def test_parse_simple_html(self):
         """Test parsing with simple HTML content."""
@@ -61,6 +67,55 @@ class TestHTMLParser:
         result = parser.execute(html_content)
         
         assert result.success is True
-        assert isinstance(result.data, list)
+        # result.data is now a tuple (tracks, total_duration, metadata)
+        tracks, total_duration, metadata = result.data
+        assert isinstance(tracks, list)
+        assert isinstance(metadata, dict)
         # Should extract tracks from the HTML
-        assert len(result.data) >= 0  # May or may not find tracks depending on parsing logic
+        assert len(tracks) >= 0  # May or may not find tracks depending on parsing logic
+
+    def test_timing_rules_application(self):
+        """Test that timing rules are applied correctly."""
+        from dj_set_downloader.models.domain_track import DomainTrack
+        
+        parser = HTMLParser()
+        
+        # Create test tracks with various start times
+        test_tracks = [
+            DomainTrack(
+                name="Track 1",
+                artist="Artist 1",
+                start_time="05:30",  # Should be changed to 00:00
+                end_time=None,
+                track_number=1
+            ),
+            DomainTrack(
+                name="Track 2", 
+                artist="Artist 2",
+                start_time="08:45",
+                end_time=None,
+                track_number=2
+            ),
+            DomainTrack(
+                name="Track 3",
+                artist="Artist 3", 
+                start_time="12:15",
+                end_time=None,
+                track_number=3
+            )
+        ]
+        
+        # Apply timing rules
+        result_tracks = parser._apply_timing_rules(test_tracks, "15:30")  # Pass a total duration
+        
+        # Verify first track starts at 00:00
+        assert result_tracks[0].start_time == "00:00"
+        
+        # Verify end times are set correctly
+        assert result_tracks[0].end_time == "08:45"  # Start time of track 2
+        assert result_tracks[1].end_time == "12:15"  # Start time of track 3
+        assert result_tracks[2].end_time == "15:30"  # Last track should have the total duration as end time
+        
+        # Verify other start times remain unchanged
+        assert result_tracks[1].start_time == "08:45"
+        assert result_tracks[2].start_time == "12:15"

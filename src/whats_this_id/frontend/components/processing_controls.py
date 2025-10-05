@@ -52,7 +52,7 @@ def _handle_job_status_update(status, api_service: DJSetProcessorService) -> Non
     elif status.status == "completed":
         st.progress(1.0)
         st.success("✅ Processing completed successfully!")
-        render_download_section(st.session_state.processing_job_id, status)
+        render_download_section(st.session_state.processing_job_id)
         st.stop()  # Stop auto-refresh once completed
 
     elif status.status == "failed":

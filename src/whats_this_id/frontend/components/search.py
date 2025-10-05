@@ -54,8 +54,29 @@ def _handle_search_action():
                     st.session_state.query_text
                 )
             )
-            update_search_results(result.pydantic, dj_set_url)
+            # The new manager returns the tracklist directly, no need for .pydantic
+            if result is None or (hasattr(result, 'tracks') and not result.tracks):
+                st.warning("🔍 No tracklists found for your query. Try adjusting your search terms or check the spelling.")
+                st.info("💡 **Tips for better results:**\n- Include the DJ/artist name and event name\n- Try different variations of the name\n- Be more specific about the event or venue")
+            else:
+                update_search_results(result, dj_set_url)
 
         except Exception as e:
-            st.error(f"Search failed: {e}")
-            st.error("Please try again or check your query.")
+            error_msg = str(e)
+            
+            # Provide more user-friendly error messages
+            if "net::err_aborted" in error_msg.lower() or "err_aborted" in error_msg.lower():
+                st.error("🚫 Search temporarily blocked: Google is temporarily blocking our requests. This usually resolves itself - please try again in a few minutes.")
+                st.info("💡 **What you can do:**\n- Wait 2-3 minutes and try again\n- Try a different search query\n- Check if you have a stable internet connection")
+            elif "unable to connect" in error_msg.lower():
+                st.error("🔌 Connection failed: Unable to connect to search services. Please check your internet connection and try again.")
+            elif "timeout" in error_msg.lower():
+                st.error("⏱️ Request timed out: The search took too long to complete. Please try again with a more specific query.")
+            elif "blocking requests" in error_msg.lower():
+                st.error("🚫 Access blocked: The website blocked our request. This might be temporary - please try again later.")
+            elif "no results" in error_msg.lower():
+                st.warning("🔍 No tracklists found: Try adjusting your search query or check the spelling of artist/DJ names.")
+            else:
+                st.error(f"❌ Search failed: {error_msg}")
+            
+            st.info("💡 **Tips for better results:**\n- Include the DJ/artist name and event name\n- Try different variations of the name\n- Be more specific about the event or venue")

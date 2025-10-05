@@ -65,7 +65,8 @@ class TestTracklistManager:
         mock_searcher.search_tracklist1001.return_value = [
             SearchResult(url="https://test.com", title="Test", snippet="Test")
         ]
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9)
+        mock_parser.parse.return_value = (mock_domain_tracks, 0.9, None, {"name": "Test Set", "artist": "Test Artist"})
+        mock_parser._apply_timing_rules.return_value = mock_domain_tracks
 
         manager = TracklistManager()
         manager.searcher = mock_searcher
@@ -183,7 +184,7 @@ class TestTracklistManager:
         self, mock_fetcher, mock_parser, mock_domain_tracks
     ):
         """Test _fetch_and_parse method with successful parsing."""
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9)
+        mock_parser.parse.return_value = (mock_domain_tracks, 0.9, None, {"name": "Test Set", "artist": "Test Artist"})
 
         manager = TracklistManager()
         manager.fetcher = mock_fetcher
@@ -197,6 +198,8 @@ class TestTracklistManager:
         assert len(parsed_tracklists) == 1
         assert len(parsed_tracklists[0][0]) == 3  # 3 tracks
         assert parsed_tracklists[0][1] == 0.9  # confidence
+        assert parsed_tracklists[0][2] is None  # duration
+        assert parsed_tracklists[0][3]["name"] == "Test Set"  # metadata
         assert len(run.steps) == 1
         assert run.steps[0].step_name == "Parse"
 
@@ -246,14 +249,20 @@ class TestTracklistManager:
         track1 = Mock(spec=DomainTrack)
         track1.title = "Same Track"
         track1.name = "Same Track"  # Add name attribute for compatibility
+        track1.start_time = "00:00"
+        track1.end_time = None
         track2 = Mock(spec=DomainTrack)
         track2.title = "Same Track"  # Duplicate
         track2.name = "Same Track"  # Add name attribute for compatibility
+        track2.start_time = "05:00"
+        track2.end_time = None
         track3 = Mock(spec=DomainTrack)
         track3.title = "Different Track"
         track3.name = "Different Track"  # Add name attribute for compatibility
+        track3.start_time = "10:00"
+        track3.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8), ([track3], 0.9)]
+        parsed_tracklists = [([track1, track2], 0.8, None, {"name": "Set 1", "artist": "Artist 1"}), ([track3], 0.9, None, {"name": "Set 2", "artist": "Artist 2"})]
 
         manager = TracklistManager()
         run = SearchRun(query="test")
@@ -274,11 +283,15 @@ class TestTracklistManager:
         track1 = Mock(spec=DomainTrack)
         track1.title = "Same Track"
         track1.name = "Same Track"  # Add name attribute for compatibility
+        track1.start_time = "00:00"
+        track1.end_time = None
         track2 = Mock(spec=DomainTrack)
         track2.title = "SAME TRACK"  # Different case
         track2.name = "SAME TRACK"  # Add name attribute for compatibility
+        track2.start_time = "05:00"
+        track2.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8)]
+        parsed_tracklists = [([track1, track2], 0.8, None, {"name": "Test Set", "artist": "Test Artist"})]
 
         manager = TracklistManager()
         run = SearchRun(query="test")

@@ -5,8 +5,8 @@ import concurrent.futures
 from functools import partial
 from typing import Any, Optional, Tuple
 
-from whats_this_id.agents import TracklistSearchCrew
 from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
+from whats_this_id.frontend.services.tracklist_manager_service import get_tracklist_manager_service
 
 
 class SearchService:
@@ -24,16 +24,16 @@ class SearchService:
     def __init__(self):
         """Initialize the search service (only once)."""
         if not self._initialized:
-            self._crew = None
+            self._tracklist_manager_service = None
             self._soundcloud_handler = None
             self._initialized = True
 
     @property
-    def crew(self) -> TracklistSearchCrew:
-        """Get or create the tracklist search crew (lazy initialization)."""
-        if self._crew is None:
-            self._crew = TracklistSearchCrew()
-        return self._crew
+    def tracklist_manager_service(self):
+        """Get or create the tracklist manager service (lazy initialization)."""
+        if self._tracklist_manager_service is None:
+            self._tracklist_manager_service = get_tracklist_manager_service()
+        return self._tracklist_manager_service
 
     @property
     def soundcloud_handler(self) -> SoundCloudHandler:
@@ -43,7 +43,7 @@ class SearchService:
         return self._soundcloud_handler
 
     async def search_tracklist_and_soundcloud(self, query_text: str) -> Tuple[Any, str]:
-        """Run tracklist search and SoundCloud search concurrently.
+        """Run tracklist search and SoundCloud search with delay to avoid rate limiting.
 
         Args:
             query_text: The search query string
@@ -51,24 +51,28 @@ class SearchService:
         Returns:
             Tuple of (tracklist_result, dj_set_url)
         """
+        # Run tracklist search in a thread to avoid event loop conflicts
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            # Create partial functions for the searches
-            tracklist_search = partial(
-                lambda q: self.crew.crew().kickoff(inputs={"dj_set": q}),
-                query_text.strip(),
-            )
-
-            # Submit both tasks to run concurrently
             loop = asyncio.get_event_loop()
-            tracklist_future = loop.run_in_executor(executor, tracklist_search)
-            soundcloud_future = self.soundcloud_handler.find_dj_set_url(query_text)
-
-            # Wait for both to complete
-            tracklist_result, dj_set_url = await asyncio.gather(
-                tracklist_future, soundcloud_future
+            tracklist_future = loop.run_in_executor(
+                executor, 
+                self.tracklist_manager_service.search_tracklist, 
+                query_text.strip()
             )
-
-            return tracklist_result, dj_set_url or ""
+            
+            # Wait for tracklist search to complete
+            tracklist_result = await tracklist_future
+        
+        # Add a small delay to avoid rate limiting
+        await asyncio.sleep(2)
+        
+        # Then run SoundCloud search
+        dj_set_url = await self.soundcloud_handler.find_dj_set_url(query_text)
+        
+        # Extract the tracklist from the SearchRun
+        final_tracklist = self.tracklist_manager_service.get_tracklist_from_search_run(tracklist_result)
+        
+        return final_tracklist, dj_set_url or ""
 
     def search_tracklist(self, query_text: str) -> Any:
         """Search for tracklist only (synchronous).
@@ -79,7 +83,8 @@ class SearchService:
         Returns:
             Tracklist search result
         """
-        return self.crew.crew().kickoff(inputs={"dj_set": query_text.strip()})
+        search_run = self.tracklist_manager_service.search_tracklist(query_text.strip())
+        return self.tracklist_manager_service.get_tracklist_from_search_run(search_run)
 
     async def search_soundcloud(self, query_text: str) -> str:
         """Search for SoundCloud DJ set URL (asynchronous).
