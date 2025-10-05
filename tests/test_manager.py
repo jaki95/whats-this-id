@@ -63,7 +63,7 @@ class TestTracklistManager:
         """Test successful search run."""
         # Setup mocks
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(url="https://test.com", link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.return_value = (
             mock_domain_tracks,
