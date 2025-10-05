@@ -142,8 +142,6 @@ class Parser(BaseOperation):
         # More comprehensive patterns for 1001tracklists
         # Order matters - more specific patterns first
         text_patterns = [
-            # Specific pattern for the expected duration (highest priority)
-            r"2:08:00",
             # Player duration patterns (high priority)
             r"Player\s+\d+\s*\[(\d+:\d+(?::\d+)?)\]",
             # Standard duration patterns
