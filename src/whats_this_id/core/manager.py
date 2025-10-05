@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from dj_set_downloader.models.domain_track import DomainTrack
+
 from whats_this_id.core.common import DomainTracklist, SearchRun, log_step
 from whats_this_id.core.config import SEARCH_CONFIG
 from whats_this_id.core.fetchers.fetcher import Fetcher
@@ -26,11 +27,9 @@ class TracklistManager:
         self.fetcher = Fetcher(
             timeout=self.config.get("timeout", 30),
             max_retries=1,
-            )
+        )
         self.parser = Parser(
-            timeout=self.config.get(
-                "parser_timeout", 15
-            ),
+            timeout=self.config.get("parser_timeout", 15),
             max_retries=1,
         )
         self.searcher = Searcher(
@@ -107,7 +106,10 @@ class TracklistManager:
             duration = (datetime.now() - step_start).total_seconds() * 1000
             error_msg = str(e)
 
-            if "net::err_aborted" in error_msg.lower() or "err_aborted" in error_msg.lower():
+            if (
+                "net::err_aborted" in error_msg.lower()
+                or "err_aborted" in error_msg.lower()
+            ):
                 user_friendly_error = "Search service temporarily blocked. This is usually temporary - please try again in a few minutes."
             elif "unable to connect" in error_msg.lower():
                 user_friendly_error = f"Search service unavailable: {error_msg}"
@@ -143,11 +145,15 @@ class TracklistManager:
                     continue
 
                 # Parse content
-                tracks, confidence, total_duration, metadata = self.parser.parse(content)
+                tracks, confidence, total_duration, metadata = self.parser.parse(
+                    content
+                )
 
                 # Filter by confidence threshold
                 if confidence >= self.min_confidence_threshold:
-                    parsed_tracklists.append((tracks, confidence, total_duration, metadata))
+                    parsed_tracklists.append(
+                        (tracks, confidence, total_duration, metadata)
+                    )
 
                 duration = (datetime.now() - step_start).total_seconds() * 1000
                 log_step(
@@ -217,7 +223,7 @@ class TracklistManager:
             if total_duration is None and duration is not None:
                 total_duration = duration
                 logger.info(f"Found total duration: {total_duration}")
-            
+
             # Use the best metadata found (prefer non-None values)
             for key in best_metadata:
                 if best_metadata[key] is None and metadata.get(key) is not None:
@@ -245,25 +251,29 @@ class TracklistManager:
             pass  # If sorting fails, keep original order
 
         # Reapply timing rules after sorting to fix end times
-        if unique_tracks and hasattr(self.parser, '_apply_timing_rules'):
-            logger.info(f"Reapplying timing rules with total_duration: {total_duration}")
-            unique_tracks = self.parser._apply_timing_rules(unique_tracks, total_duration)
+        if unique_tracks and hasattr(self.parser, "_apply_timing_rules"):
+            logger.info(
+                f"Reapplying timing rules with total_duration: {total_duration}"
+            )
+            unique_tracks = self.parser._apply_timing_rules(
+                unique_tracks, total_duration
+            )
 
         avg_confidence = (
             total_confidence / len(parsed_tracklists) if parsed_tracklists else 0.0
         )
-        
+
         # Store the total duration in the run for later use
         if total_duration:
             run.total_duration_ms = self._duration_to_ms(total_duration)
-        
+
         # Create DomainTracklist with extracted metadata
         tracklist_kwargs = {
             "domain": "1001tracklists.com",
             "tracks": unique_tracks,
-            "confidence": avg_confidence
+            "confidence": avg_confidence,
         }
-        
+
         # Add metadata if available
         if best_metadata["name"]:
             tracklist_kwargs["name"] = best_metadata["name"]
@@ -273,7 +283,7 @@ class TracklistManager:
             tracklist_kwargs["year"] = best_metadata["year"]
         if best_metadata["genre"]:
             tracklist_kwargs["genre"] = best_metadata["genre"]
-        
+
         run.final_tracklist = DomainTracklist(**tracklist_kwargs)
 
         log_step(
@@ -293,7 +303,7 @@ class TracklistManager:
     def _duration_to_ms(self, duration: str) -> float:
         """Convert duration string (hh:mm:ss or mm:ss) to milliseconds."""
         try:
-            parts = duration.split(':')
+            parts = duration.split(":")
             if len(parts) == 2:  # mm:ss
                 minutes, seconds = int(parts[0]), int(parts[1])
                 total_seconds = minutes * 60 + seconds
@@ -302,7 +312,7 @@ class TracklistManager:
                 total_seconds = hours * 3600 + minutes * 60 + seconds
             else:
                 return 0.0
-            
+
             return total_seconds * 1000.0
         except (ValueError, AttributeError):
             return 0.0

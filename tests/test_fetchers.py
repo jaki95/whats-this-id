@@ -30,7 +30,7 @@ class TestHTMLFetcher:
         """Test fetch with empty URL."""
         fetcher = HTMLFetcher()
         result = fetcher.fetch("")
-        
+
         # Should return empty string for invalid URLs
         assert result == ""
 
@@ -38,6 +38,6 @@ class TestHTMLFetcher:
         """Test fetch with invalid URL."""
         fetcher = HTMLFetcher()
         result = fetcher.fetch("invalid-url")
-        
+
         # Should handle gracefully and return empty string
         assert result == ""

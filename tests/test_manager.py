@@ -65,7 +65,12 @@ class TestTracklistManager:
         mock_searcher.search_tracklist1001.return_value = [
             SearchResult(url="https://test.com", title="Test", snippet="Test")
         ]
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9, None, {"name": "Test Set", "artist": "Test Artist"})
+        mock_parser.parse.return_value = (
+            mock_domain_tracks,
+            0.9,
+            None,
+            {"name": "Test Set", "artist": "Test Artist"},
+        )
         mock_parser._apply_timing_rules.return_value = mock_domain_tracks
 
         manager = TracklistManager()
@@ -184,7 +189,12 @@ class TestTracklistManager:
         self, mock_fetcher, mock_parser, mock_domain_tracks
     ):
         """Test _fetch_and_parse method with successful parsing."""
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9, None, {"name": "Test Set", "artist": "Test Artist"})
+        mock_parser.parse.return_value = (
+            mock_domain_tracks,
+            0.9,
+            None,
+            {"name": "Test Set", "artist": "Test Artist"},
+        )
 
         manager = TracklistManager()
         manager.fetcher = mock_fetcher
@@ -262,7 +272,10 @@ class TestTracklistManager:
         track3.start_time = "10:00"
         track3.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8, None, {"name": "Set 1", "artist": "Artist 1"}), ([track3], 0.9, None, {"name": "Set 2", "artist": "Artist 2"})]
+        parsed_tracklists = [
+            ([track1, track2], 0.8, None, {"name": "Set 1", "artist": "Artist 1"}),
+            ([track3], 0.9, None, {"name": "Set 2", "artist": "Artist 2"}),
+        ]
 
         manager = TracklistManager()
         run = SearchRun(query="test")
@@ -291,7 +304,9 @@ class TestTracklistManager:
         track2.start_time = "05:00"
         track2.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8, None, {"name": "Test Set", "artist": "Test Artist"})]
+        parsed_tracklists = [
+            ([track1, track2], 0.8, None, {"name": "Test Set", "artist": "Test Artist"})
+        ]
 
         manager = TracklistManager()
         run = SearchRun(query="test")

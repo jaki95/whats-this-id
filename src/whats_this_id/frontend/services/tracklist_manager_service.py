@@ -2,8 +2,8 @@
 
 from typing import Any, Optional
 
-from whats_this_id.core.manager import TracklistManager
 from whats_this_id.core.common import SearchRun
+from whats_this_id.core.manager import TracklistManager
 
 
 class TracklistManagerService:
@@ -52,17 +52,17 @@ class TracklistManagerService:
         if search_run.final_tracklist is not None:
             # Create a frontend-compatible tracklist by adding missing attributes
             tracklist = search_run.final_tracklist
-            
+
             # Add frontend-expected attributes if they don't exist
-            if not hasattr(tracklist, 'name') or tracklist.name is None:
+            if not hasattr(tracklist, "name") or tracklist.name is None:
                 tracklist.name = search_run.query
-            if not hasattr(tracklist, 'artist') or tracklist.artist is None:
+            if not hasattr(tracklist, "artist") or tracklist.artist is None:
                 tracklist.artist = "Unknown Artist"
-            if not hasattr(tracklist, 'year') or tracklist.year is None:
+            if not hasattr(tracklist, "year") or tracklist.year is None:
                 tracklist.year = 2024  # Default to current year as integer
-            if not hasattr(tracklist, 'genre') or tracklist.genre is None:
+            if not hasattr(tracklist, "genre") or tracklist.genre is None:
                 tracklist.genre = "Electronic"
-                
+
             return tracklist
         return None
 
