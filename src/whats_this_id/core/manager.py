@@ -217,6 +217,10 @@ class TracklistManager:
         for tracks, confidence, duration, metadata in parsed_tracklists:
             all_tracks.extend(tracks)
             total_confidence += confidence
+            # Log ID tracks found
+            id_tracks = [t for t in tracks if t.name.lower() == "id"]
+            if id_tracks:
+                logger.info(f"Found {len(id_tracks)} ID tracks in this tracklist")
             # Use the first non-None duration found
             if total_duration is None and duration is not None:
                 total_duration = duration
@@ -227,15 +231,27 @@ class TracklistManager:
                 if best_metadata[key] is None and metadata.get(key) is not None:
                     best_metadata[key] = metadata[key]
 
-        # Deduplicate tracks by title (case-insensitive)
+        # Deduplicate tracks by title (case-insensitive), but handle ID tracks specially
         seen_titles = set()
         unique_tracks = []
 
         for track in all_tracks:
-            title_lower = track.name.lower()
-            if title_lower not in seen_titles:
-                seen_titles.add(title_lower)
+            # For ID tracks, use a combination of name and track_number for uniqueness
+            # to avoid deduplicating different ID tracks
+            if track.name.lower() == "id":
+                unique_key = f"{track.name.lower()}_{track.track_number}"
+            else:
+                unique_key = track.name.lower()
+
+            if unique_key not in seen_titles:
+                seen_titles.add(unique_key)
                 unique_tracks.append(track)
+
+        # Log ID tracks after deduplication
+        id_tracks_after_dedup = [t for t in unique_tracks if t.name.lower() == "id"]
+        logger.info(
+            f"After deduplication: {len(id_tracks_after_dedup)} ID tracks remain out of {len(unique_tracks)} total tracks"
+        )
 
         # Sort by track number
         try:

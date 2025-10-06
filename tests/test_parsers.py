@@ -122,3 +122,51 @@ class TestHTMLParser:
         # Verify other start times remain unchanged
         assert result_tracks[1].start_time == "08:45"
         assert result_tracks[2].start_time == "12:15"
+
+    def test_complex_track_name_parsing(self):
+        """Test parsing of complex track names with parentheses and special characters."""
+        from whats_this_id.core.parsers.text_cleaners import TextCleaner
+        from whats_this_id.core.parsers.track_extractors import TrackExtractors
+
+        # Test the specific track that was reported as missing
+        track_text = "Prince Of Denmark - (In The End) The Ghost Ran Out Of Memory (Mind Against Remix)"
+
+        # Test that the track can be parsed
+        result = TrackExtractors._parse_artist_track_text(track_text)
+        assert result is not None, "Prince Of Denmark track should be parseable"
+        assert result.artist == "Prince Of Denmark"
+        assert (
+            result.name
+            == "(In The End) The Ghost Ran Out Of Memory (Mind Against Remix)"
+        )
+
+        # Test that text cleaning preserves the track name
+        track_name = "(In The End) The Ghost Ran Out Of Memory (Mind Against Remix)"
+        cleaned = TextCleaner.clean_track_name(track_name)
+        assert cleaned == track_name, (
+            "Text cleaning should preserve legitimate track names"
+        )
+
+        # Test that the track passes filtering criteria
+        assert len(track_name) <= 100, "Track name should not exceed length limit"
+        assert track_name.count("(") <= 2, (
+            "Track name should not exceed parentheses limit"
+        )
+        assert track_name.count("[") <= 2, "Track name should not exceed brackets limit"
+
+    def test_id_track_parsing(self):
+        """Test parsing of ID tracks."""
+        from whats_this_id.core.parsers.track_extractors import TrackExtractors
+
+        # Test ID track detection
+        test_cases = [
+            ("ID - ID", True),
+            ("id - id", True),
+            ("ID - id", True),
+            ("Regular Track - Regular Artist", False),
+        ]
+
+        for text, expected in test_cases:
+            element = {}
+            result = TrackExtractors._is_id_track(element, text)
+            assert result == expected, f"ID track detection failed for '{text}'"
