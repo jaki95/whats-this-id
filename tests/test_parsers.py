@@ -2,6 +2,7 @@
 
 import pytest
 
+from whats_this_id.core.common import DomainTrack
 from whats_this_id.core.parsers.base import Parser
 from whats_this_id.core.parsers.parser import Parser as HTMLParser
 
@@ -76,8 +77,6 @@ class TestHTMLParser:
 
     def test_timing_rules_application(self):
         """Test that timing rules are applied correctly."""
-        from dj_set_downloader.models.domain_track import DomainTrack
-
         parser = HTMLParser()
 
         # Create test tracks with various start times

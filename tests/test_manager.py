@@ -3,9 +3,7 @@
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from dj_set_downloader.models.domain_track import DomainTrack
-
-from whats_this_id.core.common import SearchRun, StepLog
+from whats_this_id.core.common import DomainTrack, SearchRun, StepLog
 from whats_this_id.core.manager import TracklistManager
 from whats_this_id.core.search.searcher import SearchResult
 

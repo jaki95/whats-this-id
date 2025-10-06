@@ -2,13 +2,14 @@
 Parser that handles all content parsing operations.
 """
 
+import asyncio
+import datetime
 import re
 from typing import Any
 
 from bs4 import BeautifulSoup
-from dj_set_downloader.models.domain_track import DomainTrack
 
-from whats_this_id.core.common import BaseOperation, logger
+from whats_this_id.core.common import BaseOperation, DomainTrack, logger
 
 # Constants for track extraction patterns
 TRACKLIST_PATTERNS = {
@@ -53,18 +54,14 @@ class Parser(BaseOperation):
         Returns:
             Tuple of (tracks, confidence_score, total_duration, metadata)
         """
-        import asyncio
-
-        # Run the async method in a new event loop
+        loop = asyncio.new_event_loop()
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-
-        tracks, total_duration, metadata = loop.run_until_complete(
-            self._execute_async(content)
-        )
+            tracks, total_duration, metadata = loop.run_until_complete(
+                self._execute_async(content)
+            )
+        finally:
+            loop.close()
 
         # Calculate confidence based on number of tracks found
         confidence = min(1.0, len(tracks) / 10.0) if tracks else 0.0
@@ -142,9 +139,7 @@ class Parser(BaseOperation):
         # More comprehensive patterns for 1001tracklists
         # Order matters - more specific patterns first
         text_patterns = [
-            # Specific pattern for the expected duration (highest priority)
-            r"2:08:00",
-            # Player duration patterns (high priority)
+            # Player duration patterns
             r"Player\s+\d+\s*\[(\d+:\d+(?::\d+)?)\]",
             # Standard duration patterns
             r"Duration:?\s*(\d+:\d+(?::\d+)?)",
@@ -173,10 +168,6 @@ class Parser(BaseOperation):
             matches = re.findall(pattern, all_text, re.I)
             for match in matches:
                 duration = match
-                # For the specific pattern "2:08:00", return it directly
-                if duration == "2:08:00":
-                    logger.info(f"Found specific duration: {duration}")
-                    return duration
                 # Validate that this looks like a reasonable duration
                 if self._is_valid_duration(duration):
                     logger.info(f"Found total duration in text: {duration}")
@@ -210,17 +201,6 @@ class Parser(BaseOperation):
                     if self._is_valid_duration(duration):
                         logger.info(f"Found total duration in element: {duration}")
                         return duration
-
-        # If no duration found, check for specific known tracklists
-        # This is a temporary fix until we can properly extract duration from HTML
-        if (
-            "mind against" in all_text.lower()
-            and "afterlife voyage" in all_text.lower()
-        ):
-            logger.info(
-                "Found Mind Against - Afterlife Voyage tracklist, using known duration: 2:08:00"
-            )
-            return "2:08:00"
 
         # If no duration found, return None
         logger.warning("Could not extract total duration from page")
@@ -480,11 +460,6 @@ class Parser(BaseOperation):
     def _clean_artist_name(self, artist_part: str) -> str:
         """Clean artist name by removing track numbers and timestamps."""
         artist = artist_part
-
-        # Remove timestamps from the beginning of artist names
-        import re
-
-        artist = re.sub(r"^\d+:\d+(?::\d+)?\s*", "", artist)
 
         for pattern in [
             CLEANUP_PATTERNS["track_number_time"],
@@ -797,7 +772,7 @@ class Parser(BaseOperation):
             Year as integer or None if not found
         """
         # Look for 4-digit years between 1990 and current year + 1
-        current_year = 2024
+        current_year = datetime.now().year
         year_pattern = r"\b(19[9]\d|20[0-2]\d)\b"
 
         matches = re.findall(year_pattern, text)

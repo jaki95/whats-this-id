@@ -1,5 +1,6 @@
 """Service for the new tracklist search manager."""
 
+import datetime
 from typing import Any, Optional
 
 from whats_this_id.core.common import SearchRun
@@ -59,7 +60,7 @@ class TracklistManagerService:
             if not hasattr(tracklist, "artist") or tracklist.artist is None:
                 tracklist.artist = "Unknown Artist"
             if not hasattr(tracklist, "year") or tracklist.year is None:
-                tracklist.year = 2024  # Default to current year as integer
+                tracklist.year = datetime.now().year
             if not hasattr(tracklist, "genre") or tracklist.genre is None:
                 tracklist.genre = "Electronic"
 

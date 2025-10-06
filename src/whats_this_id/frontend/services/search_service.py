@@ -2,7 +2,7 @@
 
 import asyncio
 import concurrent.futures
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
 from whats_this_id.frontend.services.tracklist_manager_service import (
@@ -13,7 +13,7 @@ from whats_this_id.frontend.services.tracklist_manager_service import (
 class SearchService:
     """Service for handling tracklist and SoundCloud searches."""
 
-    _instance: Optional["SearchService"] = None
+    _instance: "SearchService" | None = None
     _initialized: bool = False
 
     def __new__(cls):
@@ -43,32 +43,38 @@ class SearchService:
             self._soundcloud_handler = SoundCloudHandler()
         return self._soundcloud_handler
 
-    async def search_tracklist_and_soundcloud(self, query_text: str) -> Tuple[Any, str]:
-        """Run tracklist search and SoundCloud search with delay to avoid rate limiting.
+    async def search_tracklist_and_soundcloud(
+        self, query_text: str, soundcloud_delay: float = 2.0
+    ) -> tuple[Any, str]:
+        """Run tracklist search and SoundCloud search concurrently with bounded delay.
 
         Args:
             query_text: The search query string
+            soundcloud_delay: Delay in seconds before starting SoundCloud search to avoid rate limiting
 
         Returns:
             Tuple of (tracklist_result, dj_set_url)
         """
-        # Run tracklist search in a thread to avoid event loop conflicts
+        # Start both searches concurrently
         with concurrent.futures.ThreadPoolExecutor() as executor:
             loop = asyncio.get_event_loop()
+
+            # Start tracklist search in a thread to avoid event loop conflicts
             tracklist_future = loop.run_in_executor(
                 executor,
                 self.tracklist_manager_service.search_tracklist,
                 query_text.strip(),
             )
 
-            # Wait for tracklist search to complete
-            tracklist_result = await tracklist_future
+            # Start SoundCloud search task with configurable delay
+            soundcloud_task = asyncio.create_task(
+                self.search_soundcloud(query_text, soundcloud_delay)
+            )
 
-        # Add a small delay to avoid rate limiting
-        await asyncio.sleep(2)
-
-        # Then run SoundCloud search
-        dj_set_url = await self.soundcloud_handler.find_dj_set_url(query_text)
+            # Wait for both to complete
+            tracklist_result, dj_set_url = await asyncio.gather(
+                tracklist_future, soundcloud_task
+            )
 
         # Extract the tracklist from the SearchRun
         final_tracklist = self.tracklist_manager_service.get_tracklist_from_search_run(
@@ -89,15 +95,19 @@ class SearchService:
         search_run = self.tracklist_manager_service.search_tracklist(query_text.strip())
         return self.tracklist_manager_service.get_tracklist_from_search_run(search_run)
 
-    async def search_soundcloud(self, query_text: str) -> str:
-        """Search for SoundCloud DJ set URL (asynchronous).
+    async def search_soundcloud(self, query_text: str, delay: float) -> str:
+        """Run SoundCloud search with a bounded delay to respect rate limits.
 
         Args:
             query_text: The search query string
+            delay: Delay in seconds before starting the search
 
         Returns:
             SoundCloud URL
         """
+        # Apply bounded delay before starting the search
+        await asyncio.sleep(delay)
+
         result = await self.soundcloud_handler.find_dj_set_url(query_text)
         return result or ""
 

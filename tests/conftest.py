@@ -3,8 +3,8 @@
 from unittest.mock import Mock
 
 import pytest
-from dj_set_downloader.models.domain_track import DomainTrack
 
+from whats_this_id.core.common import DomainTrack
 from whats_this_id.core.search.searcher import SearchResult
 
 

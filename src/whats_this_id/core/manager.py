@@ -6,9 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from dj_set_downloader.models.domain_track import DomainTrack
-
-from whats_this_id.core.common import DomainTracklist, SearchRun, log_step
+from whats_this_id.core.common import DomainTrack, DomainTracklist, SearchRun, log_step
 from whats_this_id.core.config import SEARCH_CONFIG
 from whats_this_id.core.fetchers.fetcher import Fetcher
 from whats_this_id.core.parsers.parser import Parser
@@ -251,11 +249,11 @@ class TracklistManager:
             pass  # If sorting fails, keep original order
 
         # Reapply timing rules after sorting to fix end times
-        if unique_tracks and hasattr(self.parser, "_apply_timing_rules"):
+        if unique_tracks and hasattr(self.parser, "apply_timing_rules"):
             logger.info(
                 f"Reapplying timing rules with total_duration: {total_duration}"
             )
-            unique_tracks = self.parser._apply_timing_rules(
+            unique_tracks = self.parser.apply_timing_rules(
                 unique_tracks, total_duration
             )
 
