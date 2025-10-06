@@ -94,9 +94,13 @@ class Searcher(BaseOperation):
         except Exception as e:
             error_msg = str(e)
             # Handle the specific crawl4ai managed browser error
-            if "list index out of range" in error_msg and "context.pages[0]" in error_msg:
+            if (
+                "list index out of range" in error_msg
+                and "context.pages[0]" in error_msg
+            ):
                 # Retry with a fresh browser instance
                 from crawl4ai import BrowserConfig
+
                 temp_config = BrowserConfig(
                     headless=True,
                     verbose=False,
