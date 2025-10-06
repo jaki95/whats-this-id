@@ -35,8 +35,35 @@ class Fetcher(BaseOperation):
                     raise Exception(f"Failed to fetch content: {result.error_message}")
 
         except Exception as e:
-            logger.error(f"Failed to fetch content from {url}: {e}")
-            raise
+            error_msg = str(e)
+            # Handle the specific crawl4ai managed browser error
+            if "list index out of range" in error_msg and "context.pages[0]" in error_msg:
+                logger.warning(f"Managed browser context error for {url}, retrying with fresh context")
+                # Retry with a fresh browser instance
+                try:
+                    # Force a new browser context by using a different config temporarily
+                    from crawl4ai import BrowserConfig
+                    temp_config = BrowserConfig(
+                        headless=True,
+                        verbose=False,
+                        use_managed_browser=False,  # Temporarily disable for retry
+                        browser_type="chromium",
+                    )
+                    async with AsyncWebCrawler(config=temp_config) as crawler:
+                        result = await crawler.arun(
+                            url=url,
+                            config=CRAWLER_CONFIG,
+                        )
+                        if result.success:
+                            return result.html
+                        else:
+                            raise Exception(f"Failed to fetch content: {result.error_message}")
+                except Exception as retry_error:
+                    logger.error(f"Retry also failed for {url}: {retry_error}")
+                    raise Exception(f"Failed to fetch content after retry: {retry_error}")
+            else:
+                logger.error(f"Failed to fetch content from {url}: {e}")
+                raise
 
     def fetch(self, url: str) -> str:
         """Synchronous fetch method for backward compatibility."""

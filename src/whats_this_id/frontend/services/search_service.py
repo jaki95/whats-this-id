@@ -1,7 +1,7 @@
 """Search service for tracklist and SoundCloud searches."""
 
 import asyncio
-from typing import Any
+from typing import Any, Optional
 
 from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
 from whats_this_id.frontend.services.tracklist_manager_service import (
@@ -12,7 +12,7 @@ from whats_this_id.frontend.services.tracklist_manager_service import (
 class SearchService:
     """Service for handling tracklist and SoundCloud searches."""
 
-    _instance: "SearchService" | None = None
+    _instance: Optional["SearchService"] = None
     _initialized: bool = False
 
     def __new__(cls):

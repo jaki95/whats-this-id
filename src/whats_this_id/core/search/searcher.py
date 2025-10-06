@@ -59,7 +59,7 @@ class Searcher(BaseOperation):
             data = json.loads(extracted_content)
             results = [
                 SearchResult(
-                    url=entry.get("link", ""), title=entry.get("title", ""), snippet=""
+                    link=entry.get("link", ""), title=entry.get("title", ""), snippet=""
                 )
                 for entry in data
                 if "title" in entry and "link" in entry
@@ -82,14 +82,35 @@ class Searcher(BaseOperation):
         search_url = self._build_search_url(website, query)
         config = self._create_crawler_config()
 
-        async with AsyncWebCrawler(config=BROWSER_CONFIG) as crawler:
-            result = await crawler.arun(url=search_url, config=config)
+        try:
+            async with AsyncWebCrawler(config=BROWSER_CONFIG) as crawler:
+                result = await crawler.arun(url=search_url, config=config)
 
-            if not result.success:
-                raise Exception(f"Search failed: {result.error_message}")
+                if not result.success:
+                    raise Exception(f"Search failed: {result.error_message}")
 
-            results = self._parse_search_results(result.extracted_content)
-            return self._find_matching_result(results, website)
+                results = self._parse_search_results(result.extracted_content)
+                return self._find_matching_result(results, website)
+        except Exception as e:
+            error_msg = str(e)
+            # Handle the specific crawl4ai managed browser error
+            if "list index out of range" in error_msg and "context.pages[0]" in error_msg:
+                # Retry with a fresh browser instance
+                from crawl4ai import BrowserConfig
+                temp_config = BrowserConfig(
+                    headless=True,
+                    verbose=False,
+                    use_managed_browser=False,  # Temporarily disable for retry
+                    browser_type="chromium",
+                )
+                async with AsyncWebCrawler(config=temp_config) as crawler:
+                    result = await crawler.arun(url=search_url, config=config)
+                    if not result.success:
+                        raise Exception(f"Search failed: {result.error_message}")
+                    results = self._parse_search_results(result.extracted_content)
+                    return self._find_matching_result(results, website)
+            else:
+                raise
 
     def search_for_tracklist_link(self, website: str, query: str) -> Optional[str]:
         """Synchronous method for backward compatibility."""
@@ -103,7 +124,7 @@ class Searcher(BaseOperation):
         if result.success and result.data:
             return [
                 SearchResult(
-                    url=result.data,
+                    link=result.data,
                     title=f"Tracklist: {query}",
                     snippet="Found tracklist on 1001tracklists.com",
                 )
