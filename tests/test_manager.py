@@ -61,7 +61,7 @@ class TestTracklistManager:
         """Test successful search run."""
         # Setup mocks
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", link="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.return_value = (
             mock_domain_tracks,
@@ -69,7 +69,6 @@ class TestTracklistManager:
             None,
             {"name": "Test Set", "artist": "Test Artist"},
         )
-        mock_parser._apply_timing_rules.return_value = mock_domain_tracks
 
         manager = TracklistManager()
         manager.searcher = mock_searcher
@@ -109,7 +108,7 @@ class TestTracklistManager:
     def test_run_parse_error(self, mock_searcher, mock_fetcher, mock_parser):
         """Test run method when parsing fails."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.side_effect = Exception("Parse failed")
 
@@ -132,7 +131,7 @@ class TestTracklistManager:
     ):
         """Test that low confidence results are filtered out."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.return_value = ([], 0.3)  # Low confidence
 
@@ -153,7 +152,7 @@ class TestTracklistManager:
     def test_search_tracklists_success(self, mock_searcher):
         """Test _search_tracklists method with successful search."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
 
         manager = TracklistManager()
@@ -163,7 +162,7 @@ class TestTracklistManager:
         results = manager._search_tracklists("test query", run)
 
         assert len(results) == 1
-        assert results[0].url == "https://test.com"
+        assert results[0].link == "https://test.com"
         assert len(run.steps) == 1
         assert run.steps[0].step_name == "Search"
         assert run.steps[0].status == "success"
@@ -198,7 +197,7 @@ class TestTracklistManager:
         manager.fetcher = mock_fetcher
         manager.parser = mock_parser
 
-        results = [SearchResult(url="https://test.com", title="Test", snippet="Test")]
+        results = [SearchResult(link="https://test.com", title="Test", snippet="Test")]
         run = SearchRun(query="test")
 
         parsed_tracklists = manager._fetch_and_parse(results, run)
@@ -221,7 +220,7 @@ class TestTracklistManager:
         manager.fetcher = mock_fetcher
         manager.parser = mock_parser
 
-        results = [SearchResult(url="https://test.com", title="Test", snippet="Test")]
+        results = [SearchResult(link="https://test.com", title="Test", snippet="Test")]
         run = SearchRun(query="test")
 
         parsed_tracklists = manager._fetch_and_parse(results, run)

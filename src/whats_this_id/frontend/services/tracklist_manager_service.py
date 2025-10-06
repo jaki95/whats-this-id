@@ -3,6 +3,8 @@
 import datetime
 from typing import Any, Optional
 
+from dj_set_downloader.models.domain_tracklist import DomainTracklist
+
 from whats_this_id.core.common import SearchRun
 from whats_this_id.core.manager import TracklistManager
 
@@ -41,7 +43,7 @@ class TracklistManagerService:
         """
         return self._manager.run(query_text.strip())
 
-    def get_tracklist_from_search_run(self, search_run: SearchRun) -> Any:
+    def get_tracklist_from_search_run(self, search_run: SearchRun) -> DomainTracklist | None:
         """Extract the tracklist from a SearchRun for frontend compatibility.
 
         Args:

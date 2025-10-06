@@ -5,6 +5,7 @@ import pytest
 from whats_this_id.core.common import DomainTrack
 from whats_this_id.core.parsers.base import Parser
 from whats_this_id.core.parsers.parser import Parser as HTMLParser
+from whats_this_id.core.parsers.timing_utils import TimingUtils
 
 
 class TestParser:
@@ -105,7 +106,7 @@ class TestHTMLParser:
         ]
 
         # Apply timing rules
-        result_tracks = parser._apply_timing_rules(
+        result_tracks = TimingUtils.apply_timing_rules(
             test_tracks, "15:30"
         )  # Pass a total duration
 

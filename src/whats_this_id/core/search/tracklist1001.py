@@ -42,7 +42,7 @@ class Tracklist1001SearchStrategy(SearchStrategy):
             if link:
                 return [
                     SearchResult(
-                        url=link,
+                        link=link,
                         title=f"Tracklist: {query}",
                         snippet="Found tracklist on 1001tracklists.com",
                     )

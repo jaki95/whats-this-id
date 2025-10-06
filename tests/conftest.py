@@ -37,6 +37,9 @@ def mock_domain_tracks():
         track.title = f"Test Track {i + 1}"
         track.name = f"Test Track {i + 1}"  # Add name attribute for compatibility
         track.artist = f"Test Artist {i + 1}"
+        track.start_time = f"0{i}:00" if i < 10 else f"{i}:00"
+        track.end_time = None
+        track.track_number = i + 1
         tracks.append(track)
     return tracks
 

@@ -249,11 +249,12 @@ class TracklistManager:
             pass  # If sorting fails, keep original order
 
         # Reapply timing rules after sorting to fix end times
-        if unique_tracks and hasattr(self.parser, "apply_timing_rules"):
+        if unique_tracks:
             logger.info(
                 f"Reapplying timing rules with total_duration: {total_duration}"
             )
-            unique_tracks = self.parser.apply_timing_rules(
+            from whats_this_id.core.parsers.timing_utils import TimingUtils
+            unique_tracks = TimingUtils.apply_timing_rules(
                 unique_tracks, total_duration
             )
 

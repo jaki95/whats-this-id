@@ -17,9 +17,8 @@ from whats_this_id.core.config import BROWSER_CONFIG, GOOGLE_SEARCH_SCHEMA
 class SearchResult:
     """Represents a single search result."""
 
-    def __init__(self, url: str, title: str, snippet: str = ""):
-        self.url = url
-        self.link = url  # Alias for backward compatibility
+    def __init__(self, link: str, title: str, snippet: str = ""):
+        self.link = link
         self.title = title
         self.snippet = snippet
 
@@ -74,8 +73,8 @@ class Searcher(BaseOperation):
     ) -> Optional[str]:
         """Find the first result that matches the target website."""
         for result in results:
-            if website in result.url:
-                return result.url
+            if website in result.link:
+                return result.link
         return None
 
     async def _execute_async(self, website: str, query: str) -> Optional[str]:
