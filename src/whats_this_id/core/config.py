@@ -22,7 +22,7 @@ BROWSER_CONFIG = BrowserConfig(
     use_managed_browser=True,
     user_data_dir=BROWSER_CACHE_DIR,
     browser_type="chromium",
-    # Force fresh browser instance and handle dynamic content
+    # Initialize browser with proper context handling
     extra_args=[
         "--no-first-run",
         "--disable-dev-shm-usage",
@@ -31,6 +31,28 @@ BROWSER_CONFIG = BrowserConfig(
         "--disable-renderer-backgrounding",
         "--disable-web-security",
         "--disable-features=VizDisplayCompositor",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-extensions",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-tools",
+        "--disable-plugins",
+        "--disable-images",
+        "--disable-javascript",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--safebrowsing-disable-auto-update",
+        "--disable-client-side-phishing-detection",
+        "--disable-hang-monitor",
+        "--disable-prompt-on-repost",
+        "--disable-domain-reliability",
+        "--disable-features=TranslateUI",
+        "--disable-ipc-flooding-protection",
+        "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     ],
 )
 

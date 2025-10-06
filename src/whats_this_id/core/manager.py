@@ -24,17 +24,15 @@ class TracklistManager:
         # Initialize components
         self.fetcher = Fetcher(
             timeout=self.config.get("timeout", 30),
-            max_retries=1,  # Reduced retries - if it fails once due to cookies, retries won't help
+            max_retries=1,
         )
         self.parser = Parser(
-            timeout=self.config.get(
-                "parser_timeout", 15
-            ),  # Reduced from 60 to 15 seconds
-            max_retries=1,  # Reduced retries
+            timeout=self.config.get("parser_timeout", 15),
+            max_retries=1,
         )
         self.searcher = Searcher(
             timeout=self.config.get("timeout", 30),
-            max_retries=1,  # Reduced retries
+            max_retries=1,
         )
 
         self.min_confidence_threshold = self.config.get("min_confidence_threshold", 0.5)
@@ -106,11 +104,17 @@ class TracklistManager:
             duration = (datetime.now() - step_start).total_seconds() * 1000
             error_msg = str(e)
 
-            # Provide more user-friendly error messages for common issues
-            if "unable to connect" in error_msg.lower():
+            if (
+                "net::err_aborted" in error_msg.lower()
+                or "err_aborted" in error_msg.lower()
+            ):
+                user_friendly_error = "Search service temporarily blocked. This is usually temporary - please try again in a few minutes."
+            elif "unable to connect" in error_msg.lower():
                 user_friendly_error = f"Search service unavailable: {error_msg}"
             elif "timeout" in error_msg.lower():
                 user_friendly_error = f"Search request timed out: {error_msg}"
+            elif "blocking requests" in error_msg.lower():
+                user_friendly_error = "Website blocked our request. This might be temporary - please try again later."
             else:
                 user_friendly_error = error_msg
 
@@ -139,11 +143,15 @@ class TracklistManager:
                     continue
 
                 # Parse content
-                tracks, confidence = self.parser.parse(content)
+                tracks, confidence, total_duration, metadata = self.parser.parse(
+                    content
+                )
 
                 # Filter by confidence threshold
                 if confidence >= self.min_confidence_threshold:
-                    parsed_tracklists.append((tracks, confidence))
+                    parsed_tracklists.append(
+                        (tracks, confidence, total_duration, metadata)
+                    )
 
                 duration = (datetime.now() - step_start).total_seconds() * 1000
                 log_step(
@@ -203,22 +211,49 @@ class TracklistManager:
         # Combine all tracks and deduplicate by title
         all_tracks: list[DomainTrack] = []
         total_confidence = 0.0
+        total_duration = None
+        best_metadata = {"name": None, "artist": None, "year": None, "genre": None}
 
-        for tracks, confidence in parsed_tracklists:
+        for tracks, confidence, duration, metadata in parsed_tracklists:
             all_tracks.extend(tracks)
             total_confidence += confidence
+            # Log ID tracks found
+            id_tracks = [t for t in tracks if t.name.lower() == "id"]
+            if id_tracks:
+                logger.info(f"Found {len(id_tracks)} ID tracks in this tracklist")
+            # Use the first non-None duration found
+            if total_duration is None and duration is not None:
+                total_duration = duration
+                logger.info(f"Found total duration: {total_duration}")
 
-        # Deduplicate tracks by title (case-insensitive)
+            # Use the best metadata found (prefer non-None values)
+            for key in best_metadata:
+                if best_metadata[key] is None and metadata.get(key) is not None:
+                    best_metadata[key] = metadata[key]
+
+        # Deduplicate tracks by title (case-insensitive), but handle ID tracks specially
         seen_titles = set()
         unique_tracks = []
 
         for track in all_tracks:
-            title_lower = track.name.lower()
-            if title_lower not in seen_titles:
-                seen_titles.add(title_lower)
+            # For ID tracks, use a combination of name and track_number for uniqueness
+            # to avoid deduplicating different ID tracks
+            if track.name.lower() == "id":
+                unique_key = f"{track.name.lower()}_{track.track_number}"
+            else:
+                unique_key = track.name.lower()
+
+            if unique_key not in seen_titles:
+                seen_titles.add(unique_key)
                 unique_tracks.append(track)
 
-        # Sort alphabetically
+        # Log ID tracks after deduplication
+        id_tracks_after_dedup = [t for t in unique_tracks if t.name.lower() == "id"]
+        logger.info(
+            f"After deduplication: {len(id_tracks_after_dedup)} ID tracks remain out of {len(unique_tracks)} total tracks"
+        )
+
+        # Sort by track number
         try:
             unique_tracks.sort(
                 key=lambda t: getattr(t, "track_number", 999)
@@ -229,12 +264,43 @@ class TracklistManager:
             logger.warning(f"Error sorting tracks: {e}, keeping original order")
             pass  # If sorting fails, keep original order
 
+        # Reapply timing rules after sorting to fix end times
+        if unique_tracks:
+            logger.info(
+                f"Reapplying timing rules with total_duration: {total_duration}"
+            )
+            from whats_this_id.core.parsers.timing_utils import TimingUtils
+
+            unique_tracks = TimingUtils.apply_timing_rules(
+                unique_tracks, total_duration
+            )
+
         avg_confidence = (
             total_confidence / len(parsed_tracklists) if parsed_tracklists else 0.0
         )
-        run.final_tracklist = DomainTracklist(
-            domain="1001tracklists.com", tracks=unique_tracks, confidence=avg_confidence
-        )
+
+        # Store the total duration in the run for later use
+        if total_duration:
+            run.tracklist_duration_ms = self._duration_to_ms(total_duration)
+
+        # Create DomainTracklist with extracted metadata
+        tracklist_kwargs = {
+            "domain": "1001tracklists.com",
+            "tracks": unique_tracks,
+            "confidence": avg_confidence,
+        }
+
+        # Add metadata if available
+        if best_metadata["name"]:
+            tracklist_kwargs["name"] = best_metadata["name"]
+        if best_metadata["artist"]:
+            tracklist_kwargs["artist"] = best_metadata["artist"]
+        if best_metadata["year"]:
+            tracklist_kwargs["year"] = best_metadata["year"]
+        if best_metadata["genre"]:
+            tracklist_kwargs["genre"] = best_metadata["genre"]
+
+        run.final_tracklist = DomainTracklist(**tracklist_kwargs)
 
         log_step(
             run,
@@ -249,3 +315,20 @@ class TracklistManager:
         logger.info(
             f"Aggregation complete: {len(unique_tracks)} unique tracks from {len(parsed_tracklists)} tracklists"
         )
+
+    def _duration_to_ms(self, duration: str) -> float:
+        """Convert duration string (hh:mm:ss or mm:ss) to milliseconds."""
+        try:
+            parts = duration.split(":")
+            if len(parts) == 2:  # mm:ss
+                minutes, seconds = int(parts[0]), int(parts[1])
+                total_seconds = minutes * 60 + seconds
+            elif len(parts) == 3:  # hh:mm:ss
+                hours, minutes, seconds = int(parts[0]), int(parts[1]), int(parts[2])
+                total_seconds = hours * 3600 + minutes * 60 + seconds
+            else:
+                return 0.0
+
+            return total_seconds * 1000.0
+        except (ValueError, AttributeError):
+            return 0.0

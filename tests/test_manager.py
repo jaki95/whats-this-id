@@ -3,9 +3,7 @@
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from dj_set_downloader.models.domain_track import DomainTrack
-
-from whats_this_id.core.common import SearchRun, StepLog
+from whats_this_id.core.common import DomainTrack, SearchRun, StepLog
 from whats_this_id.core.manager import TracklistManager
 from whats_this_id.core.search.searcher import SearchResult
 
@@ -63,9 +61,14 @@ class TestTracklistManager:
         """Test successful search run."""
         # Setup mocks
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9)
+        mock_parser.parse.return_value = (
+            mock_domain_tracks,
+            0.9,
+            None,
+            {"name": "Test Set", "artist": "Test Artist"},
+        )
 
         manager = TracklistManager()
         manager.searcher = mock_searcher
@@ -105,7 +108,7 @@ class TestTracklistManager:
     def test_run_parse_error(self, mock_searcher, mock_fetcher, mock_parser):
         """Test run method when parsing fails."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.side_effect = Exception("Parse failed")
 
@@ -128,7 +131,7 @@ class TestTracklistManager:
     ):
         """Test that low confidence results are filtered out."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
         mock_parser.parse.return_value = ([], 0.3)  # Low confidence
 
@@ -149,7 +152,7 @@ class TestTracklistManager:
     def test_search_tracklists_success(self, mock_searcher):
         """Test _search_tracklists method with successful search."""
         mock_searcher.search_tracklist1001.return_value = [
-            SearchResult(url="https://test.com", title="Test", snippet="Test")
+            SearchResult(link="https://test.com", title="Test", snippet="Test")
         ]
 
         manager = TracklistManager()
@@ -159,7 +162,7 @@ class TestTracklistManager:
         results = manager._search_tracklists("test query", run)
 
         assert len(results) == 1
-        assert results[0].url == "https://test.com"
+        assert results[0].link == "https://test.com"
         assert len(run.steps) == 1
         assert run.steps[0].step_name == "Search"
         assert run.steps[0].status == "success"
@@ -183,13 +186,18 @@ class TestTracklistManager:
         self, mock_fetcher, mock_parser, mock_domain_tracks
     ):
         """Test _fetch_and_parse method with successful parsing."""
-        mock_parser.parse.return_value = (mock_domain_tracks, 0.9)
+        mock_parser.parse.return_value = (
+            mock_domain_tracks,
+            0.9,
+            None,
+            {"name": "Test Set", "artist": "Test Artist"},
+        )
 
         manager = TracklistManager()
         manager.fetcher = mock_fetcher
         manager.parser = mock_parser
 
-        results = [SearchResult(url="https://test.com", title="Test", snippet="Test")]
+        results = [SearchResult(link="https://test.com", title="Test", snippet="Test")]
         run = SearchRun(query="test")
 
         parsed_tracklists = manager._fetch_and_parse(results, run)
@@ -197,6 +205,8 @@ class TestTracklistManager:
         assert len(parsed_tracklists) == 1
         assert len(parsed_tracklists[0][0]) == 3  # 3 tracks
         assert parsed_tracklists[0][1] == 0.9  # confidence
+        assert parsed_tracklists[0][2] is None  # duration
+        assert parsed_tracklists[0][3]["name"] == "Test Set"  # metadata
         assert len(run.steps) == 1
         assert run.steps[0].step_name == "Parse"
 
@@ -210,7 +220,7 @@ class TestTracklistManager:
         manager.fetcher = mock_fetcher
         manager.parser = mock_parser
 
-        results = [SearchResult(url="https://test.com", title="Test", snippet="Test")]
+        results = [SearchResult(link="https://test.com", title="Test", snippet="Test")]
         run = SearchRun(query="test")
 
         parsed_tracklists = manager._fetch_and_parse(results, run)
@@ -246,14 +256,23 @@ class TestTracklistManager:
         track1 = Mock(spec=DomainTrack)
         track1.title = "Same Track"
         track1.name = "Same Track"  # Add name attribute for compatibility
+        track1.start_time = "00:00"
+        track1.end_time = None
         track2 = Mock(spec=DomainTrack)
         track2.title = "Same Track"  # Duplicate
         track2.name = "Same Track"  # Add name attribute for compatibility
+        track2.start_time = "05:00"
+        track2.end_time = None
         track3 = Mock(spec=DomainTrack)
         track3.title = "Different Track"
         track3.name = "Different Track"  # Add name attribute for compatibility
+        track3.start_time = "10:00"
+        track3.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8), ([track3], 0.9)]
+        parsed_tracklists = [
+            ([track1, track2], 0.8, None, {"name": "Set 1", "artist": "Artist 1"}),
+            ([track3], 0.9, None, {"name": "Set 2", "artist": "Artist 2"}),
+        ]
 
         manager = TracklistManager()
         run = SearchRun(query="test")
@@ -274,11 +293,17 @@ class TestTracklistManager:
         track1 = Mock(spec=DomainTrack)
         track1.title = "Same Track"
         track1.name = "Same Track"  # Add name attribute for compatibility
+        track1.start_time = "00:00"
+        track1.end_time = None
         track2 = Mock(spec=DomainTrack)
         track2.title = "SAME TRACK"  # Different case
         track2.name = "SAME TRACK"  # Add name attribute for compatibility
+        track2.start_time = "05:00"
+        track2.end_time = None
 
-        parsed_tracklists = [([track1, track2], 0.8)]
+        parsed_tracklists = [
+            ([track1, track2], 0.8, None, {"name": "Test Set", "artist": "Test Artist"})
+        ]
 
         manager = TracklistManager()
         run = SearchRun(query="test")

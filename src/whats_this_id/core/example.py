@@ -31,7 +31,10 @@ def main():
                 f"{track.track_number:02d}" if track.track_number is not None else "??"
             )
             start_time = track.start_time if track.start_time is not None else "??:??"
-            print(f"[{track_num}] {start_time} - {track.artist} - {track.name}")
+            end_time = track.end_time if track.end_time is not None else "??:??"
+            print(
+                f"[{track_num}] {start_time} - {end_time} - {track.artist} - {track.name}"
+            )
     else:
         print("Search failed")
         for step in result.steps:

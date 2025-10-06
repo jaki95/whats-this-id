@@ -8,7 +8,6 @@ from crawl4ai import AsyncWebCrawler
 
 from whats_this_id.core.common import BaseOperation
 from whats_this_id.core.config import BROWSER_CONFIG, CRAWLER_CONFIG
-from whats_this_id.core.cookie_refresh import CookieRefreshService
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,6 @@ class Fetcher(BaseOperation):
         super().__init__("Fetcher", timeout, max_retries)
         self.name = "html"
         self.content_type = "html"
-        self.cookie_refresh_service = CookieRefreshService()
 
     async def _execute_async(self, url: str) -> str:
         """Fetch HTML content from the given URL."""
@@ -37,56 +35,44 @@ class Fetcher(BaseOperation):
                     raise Exception(f"Failed to fetch content: {result.error_message}")
 
         except Exception as e:
-            error_str = str(e)
-
-            # Check for specific connection-related errors
-            if any(
-                conn_error in error_str.lower()
-                for conn_error in [
-                    "err_connection_closed",
-                    "err_connection_refused",
-                    "err_connection_timed_out",
-                    "err_connection_reset",
-                    "net::err_connection_closed",
-                    "net::err_connection_refused",
-                    "net::err_connection_timed_out",
-                    "net::err_connection_reset",
-                    "connection closed",
-                    "connection refused",
-                    "connection timed out",
-                    "connection reset",
-                ]
+            error_msg = str(e)
+            # Handle the specific crawl4ai managed browser error
+            if (
+                "list index out of range" in error_msg
+                and "context.pages[0]" in error_msg
             ):
-                # Try to refresh cookies if this appears to be a cookie-related issue
-                logger.info(
-                    f"Connection error detected for {url}, attempting cookie refresh..."
+                logger.warning(
+                    f"Managed browser context error for {url}, retrying with fresh context"
                 )
+                # Retry with a fresh browser instance
                 try:
-                    cookies_refreshed = (
-                        await self.cookie_refresh_service.refresh_cookies_if_needed(
-                            error_str
-                        )
+                    # Force a new browser context by using a different config temporarily
+                    from crawl4ai import BrowserConfig
+
+                    temp_config = BrowserConfig(
+                        headless=True,
+                        verbose=False,
+                        use_managed_browser=False,  # Temporarily disable for retry
+                        browser_type="chromium",
                     )
-                    if cookies_refreshed:
-                        logger.info("✅ Cookies refreshed successfully")
-                        raise Exception(
-                            f"Unable to connect to {url}. Cookies have been refreshed - please retry the request."
+                    async with AsyncWebCrawler(config=temp_config) as crawler:
+                        result = await crawler.arun(
+                            url=url,
+                            config=CRAWLER_CONFIG,
                         )
-                    else:
-                        logger.warning("❌ Cookie refresh failed or was skipped")
-                        # Provide manual instructions
-                        manual_instructions = self.cookie_refresh_service._refresh_cookies_manual_instruction()
-                        logger.info(manual_instructions)
-                        raise Exception(
-                            f"Unable to connect to {url}. The website may be blocking requests. Manual cookie refresh may be required."
-                        )
-                except Exception as refresh_error:
-                    logger.warning(f"Cookie refresh failed: {refresh_error}")
+                        if result.success:
+                            return result.html
+                        else:
+                            raise Exception(
+                                f"Failed to fetch content: {result.error_message}"
+                            )
+                except Exception as retry_error:
+                    logger.error(f"Retry also failed for {url}: {retry_error}")
                     raise Exception(
-                        f"Unable to connect to {url}. The website may be temporarily unavailable or blocking requests."
+                        f"Failed to fetch content after retry: {retry_error}"
                     )
             else:
-                # Re-raise other errors as-is
+                logger.error(f"Failed to fetch content from {url}: {e}")
                 raise
 
     def fetch(self, url: str) -> str:

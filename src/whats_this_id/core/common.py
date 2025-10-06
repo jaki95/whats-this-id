@@ -10,10 +10,20 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from dj_set_downloader.models.domain_tracklist import DomainTracklist
+from dj_set_downloader.models.domain_tracklist import DomainTrack, DomainTracklist
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "DomainTrack",
+    "DomainTracklist",
+    "ExecutionResult",
+    "BaseOperation",
+    "StepLog",
+    "SearchRun",
+    "log_step",
+]
 
 
 @dataclass
@@ -134,6 +144,7 @@ class SearchRun(BaseModel):
     steps: List[StepLog] = Field(default_factory=list)
     final_tracklist: DomainTracklist = Field(default_factory=DomainTracklist)
     total_duration_ms: Optional[float] = None
+    tracklist_duration_ms: Optional[float] = None
     success: bool = False
 
 

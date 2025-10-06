@@ -25,22 +25,22 @@ class TestSearchResult:
     def test_search_result_creation(self):
         """Test SearchResult creation with required fields."""
         result = SearchResult(
-            url="https://example.com/tracklist",
+            link="https://example.com/tracklist",
             title="Test Tracklist",
             snippet="A test tracklist",
         )
 
-        assert result.url == "https://example.com/tracklist"
+        assert result.link == "https://example.com/tracklist"
         assert result.title == "Test Tracklist"
         assert result.snippet == "A test tracklist"
 
     def test_search_result_with_default_snippet(self):
         """Test SearchResult creation with default snippet."""
         result = SearchResult(
-            url="https://example.com/tracklist", title="Test Tracklist"
+            link="https://example.com/tracklist", title="Test Tracklist"
         )
 
-        assert result.url == "https://example.com/tracklist"
+        assert result.link == "https://example.com/tracklist"
         assert result.title == "Test Tracklist"
         assert result.snippet == ""
 
@@ -74,7 +74,7 @@ class TestTracklist1001SearchStrategy:
 
         assert len(results) == 1
         assert isinstance(results[0], SearchResult)
-        assert results[0].url == "https://1001tracklists.com/tracklist/123"
+        assert results[0].link == "https://1001tracklists.com/tracklist/123"
         assert results[0].title == "Tracklist: test dj set"
         assert results[0].snippet == "Found tracklist on 1001tracklists.com"
 
@@ -158,7 +158,7 @@ class TestTracklist1001SearchStrategy:
         results = strategy.search(query)
 
         assert len(results) == 1
-        assert results[0].url == "https://1001tracklists.com/tracklist/456"
+        assert results[0].link == "https://1001tracklists.com/tracklist/456"
         assert results[0].title == f"Tracklist: {query}"
 
         mock_google_handler.search_for_tracklist_link.assert_called_once_with(
@@ -192,7 +192,7 @@ class TestTracklist1001SearchStrategy:
 
         assert len(results) == 1
         assert isinstance(results[0], SearchResult)
-        assert results[0].url == "https://1001tracklists.com/tracklist/789"
+        assert results[0].link == "https://1001tracklists.com/tracklist/789"
         assert results[0].title == "Tracklist: async test query"
         assert results[0].snippet == "Found tracklist on 1001tracklists.com"
 
@@ -239,7 +239,7 @@ class TestTracklistSearchManager:
             mock_1001_instance = Mock()
             mock_1001_instance.search.return_value = [
                 SearchResult(
-                    url="https://1001tracklists.com/1",
+                    link="https://1001tracklists.com/1",
                     title="Tracklist 1",
                     snippet="Snippet 1",
                 )
@@ -251,7 +251,7 @@ class TestTracklistSearchManager:
 
             # Should have results from the strategy
             assert len(results) == 1
-            assert "1001tracklists.com" in results[0].url
+            assert "1001tracklists.com" in results[0].link
 
             # Verify strategy was called
             mock_1001_instance.search.assert_called_once_with("test query")
@@ -265,7 +265,7 @@ class TestTracklistSearchManager:
             mock_1001_instance = Mock()
             mock_1001_instance.search.return_value = [
                 SearchResult(
-                    url="https://1001tracklists.com/1",
+                    link="https://1001tracklists.com/1",
                     title="Tracklist 1",
                     snippet="Snippet 1",
                 )
