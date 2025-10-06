@@ -88,8 +88,6 @@ class CookieRefreshService:
                         if result.success:
                             logger.info(f"Successfully refreshed cookies for {url}")
                             success_count += 1
-                            # Wait a bit between requests to avoid rate limiting
-                            await asyncio.sleep(2)
                         else:
                             logger.warning(
                                 f"Failed to refresh cookies for {url}: {result.error_message}"
