@@ -57,7 +57,7 @@ class SearchService:
         """
         # Start both searches concurrently
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
 
             # Start tracklist search in a thread to avoid event loop conflicts
             tracklist_future = loop.run_in_executor(
