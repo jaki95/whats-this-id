@@ -254,6 +254,7 @@ class TracklistManager:
                 f"Reapplying timing rules with total_duration: {total_duration}"
             )
             from whats_this_id.core.parsers.timing_utils import TimingUtils
+
             unique_tracks = TimingUtils.apply_timing_rules(
                 unique_tracks, total_duration
             )

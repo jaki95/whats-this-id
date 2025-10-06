@@ -78,7 +78,6 @@ class TestHTMLParser:
 
     def test_timing_rules_application(self):
         """Test that timing rules are applied correctly."""
-        parser = HTMLParser()
 
         # Create test tracks with various start times
         test_tracks = [

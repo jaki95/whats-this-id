@@ -1,7 +1,6 @@
 """Search service for tracklist and SoundCloud searches."""
 
 import asyncio
-import concurrent.futures
 from typing import Any
 
 from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
@@ -56,25 +55,25 @@ class SearchService:
             Tuple of (tracklist_result, dj_set_url)
         """
         # Start both searches concurrently
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            loop = asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
 
-            # Start tracklist search in a thread to avoid event loop conflicts
-            tracklist_future = loop.run_in_executor(
-                executor,
-                self.tracklist_manager_service.search_tracklist,
-                query_text.strip(),
-            )
+        # Start tracklist search in a thread to avoid event loop conflicts
+        # Use the event loop's default executor instead of creating a new one
+        tracklist_future = loop.run_in_executor(
+            None,  # Use default executor
+            self.tracklist_manager_service.search_tracklist,
+            query_text.strip(),
+        )
 
-            # Start SoundCloud search task with configurable delay
-            soundcloud_task = asyncio.create_task(
-                self.search_soundcloud(query_text, soundcloud_delay)
-            )
+        # Start SoundCloud search task with configurable delay
+        soundcloud_task = asyncio.create_task(
+            self.search_soundcloud(query_text, soundcloud_delay)
+        )
 
-            # Wait for both to complete
-            tracklist_result, dj_set_url = await asyncio.gather(
-                tracklist_future, soundcloud_task
-            )
+        # Wait for both to complete
+        tracklist_result, dj_set_url = await asyncio.gather(
+            tracklist_future, soundcloud_task
+        )
 
         # Extract the tracklist from the SearchRun
         final_tracklist = self.tracklist_manager_service.get_tracklist_from_search_run(

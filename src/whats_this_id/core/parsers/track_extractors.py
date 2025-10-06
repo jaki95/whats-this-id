@@ -27,7 +27,9 @@ class TrackExtractors:
         """Extract tracks from tlpItem elements."""
         elements = soup.find_all("div", class_=TRACKLIST_PATTERNS["tlp_item"])
         return [
-            TrackExtractors._extract_track_info_from_tlp_element(el, soup) for el in elements if el
+            TrackExtractors._extract_track_info_from_tlp_element(el, soup)
+            for el in elements
+            if el
         ]
 
     @staticmethod
@@ -42,7 +44,11 @@ class TrackExtractors:
     def extract_from_tlp_ids(soup: BeautifulSoup) -> list[Any]:
         """Extract tracks from tlp ID elements."""
         elements = soup.find_all("div", class_=TRACKLIST_PATTERNS["tlp_id"])
-        return [TrackExtractors._extract_track_info_from_tlp_element(el) for el in elements if el]
+        return [
+            TrackExtractors._extract_track_info_from_tlp_element(el)
+            for el in elements
+            if el
+        ]
 
     @staticmethod
     def extract_from_text_patterns(soup: BeautifulSoup) -> list[Any]:
@@ -132,10 +138,14 @@ class TrackExtractors:
 
         # Check if this is an ID track
         if TrackExtractors._is_id_track(element, element.get_text()):
-            return TrackExtractors._handle_id_track(element, soup, track_number, start_time)
+            return TrackExtractors._handle_id_track(
+                element, soup, track_number, start_time
+            )
 
         # Extract artist and track name from structured elements
-        return TrackExtractors._extract_structured_track_info(element, track_number, start_time)
+        return TrackExtractors._extract_structured_track_info(
+            element, track_number, start_time
+        )
 
     @staticmethod
     def _extract_structured_track_info(
@@ -203,12 +213,20 @@ class TrackExtractors:
         element, soup, track_number: int | None, start_time: str | None
     ) -> DomainTrack:
         """Handle ID track extraction with suggestions."""
-        suggestion = TrackExtractors._find_suggestion_for_id_track(element, soup) if soup else None
+        suggestion = (
+            TrackExtractors._find_suggestion_for_id_track(element, soup)
+            if soup
+            else None
+        )
         if suggestion:
             artist, track = suggestion
-            return TrackExtractors._create_domain_track(track, artist, track_number, start_time)
+            return TrackExtractors._create_domain_track(
+                track, artist, track_number, start_time
+            )
         else:
-            return TrackExtractors._create_domain_track("ID", "ID", track_number, start_time)
+            return TrackExtractors._create_domain_track(
+                "ID", "ID", track_number, start_time
+            )
 
     @staticmethod
     def _parse_regular_track(
@@ -226,7 +244,9 @@ class TrackExtractors:
         artist = TextCleaner.clean_artist_name(parts[0].strip())
 
         if len(artist) > 1 and len(track) > 1:
-            return TrackExtractors._create_domain_track(track, artist, track_number, start_time)
+            return TrackExtractors._create_domain_track(
+                track, artist, track_number, start_time
+            )
         return None
 
     @staticmethod
@@ -239,7 +259,9 @@ class TrackExtractors:
         # Look in suggestion container
         suggestion_container = soup.find("div", class_=re.compile(f"tlp_{track_id}"))
         if suggestion_container:
-            suggestion = TrackExtractors._extract_suggestion_from_element(suggestion_container)
+            suggestion = TrackExtractors._extract_suggestion_from_element(
+                suggestion_container
+            )
             if suggestion:
                 return suggestion
 
@@ -249,7 +271,9 @@ class TrackExtractors:
                 "div", id=TRACKLIST_PATTERNS["suggestion_id"]
             )
             if suggestions:
-                suggestion = TrackExtractors._extract_suggestion_from_element(suggestions[0])
+                suggestion = TrackExtractors._extract_suggestion_from_element(
+                    suggestions[0]
+                )
                 if suggestion:
                     return suggestion
 

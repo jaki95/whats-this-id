@@ -3,7 +3,6 @@ Text cleaning utilities for track and artist names.
 """
 
 import re
-from typing import Any
 
 # Text cleaning patterns
 CLEANUP_PATTERNS = {

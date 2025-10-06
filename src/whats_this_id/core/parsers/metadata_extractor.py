@@ -4,7 +4,6 @@ Metadata extraction utilities for DJ sets.
 
 import datetime
 import re
-from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -50,7 +49,9 @@ class MetadataExtractor:
                         title_text = TextCleaner.clean_title_text(title_text)
 
                         # Try to extract DJ set name and artist from title
-                        dj_set_name, artist = MetadataExtractor._parse_dj_set_title(title_text)
+                        dj_set_name, artist = MetadataExtractor._parse_dj_set_title(
+                            title_text
+                        )
                         if dj_set_name and artist:
                             metadata["name"] = dj_set_name
                             metadata["artist"] = artist
@@ -59,7 +60,9 @@ class MetadataExtractor:
             # If we didn't find a structured title, try to extract from the page content
             if not metadata["name"] or not metadata["artist"]:
                 # Look for common patterns in the text
-                dj_set_name, artist = MetadataExtractor._extract_dj_set_from_text_patterns(all_text)
+                dj_set_name, artist = (
+                    MetadataExtractor._extract_dj_set_from_text_patterns(all_text)
+                )
                 if dj_set_name and artist:
                     metadata["name"] = dj_set_name
                     metadata["artist"] = artist
@@ -140,9 +143,7 @@ class MetadataExtractor:
         return None, None
 
     @staticmethod
-    def _extract_dj_set_from_text_patterns(
-        text: str
-    ) -> tuple[str | None, str | None]:
+    def _extract_dj_set_from_text_patterns(text: str) -> tuple[str | None, str | None]:
         """Extract DJ set name and artist from text using various patterns.
 
         Args:

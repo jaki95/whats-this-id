@@ -1,7 +1,7 @@
 """Service for the new tracklist search manager."""
 
 import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
@@ -43,7 +43,9 @@ class TracklistManagerService:
         """
         return self._manager.run(query_text.strip())
 
-    def get_tracklist_from_search_run(self, search_run: SearchRun) -> DomainTracklist | None:
+    def get_tracklist_from_search_run(
+        self, search_run: SearchRun
+    ) -> DomainTracklist | None:
         """Extract the tracklist from a SearchRun for frontend compatibility.
 
         Args:

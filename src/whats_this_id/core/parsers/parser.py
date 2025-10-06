@@ -80,7 +80,10 @@ class Parser(BaseOperation):
         # Try different extraction patterns in order of specificity
         extraction_patterns = [
             ("tlpItem elements", lambda: TrackExtractors.extract_from_tlp_items(soup)),
-            ("track elements", lambda: TrackExtractors.extract_from_track_elements(soup)),
+            (
+                "track elements",
+                lambda: TrackExtractors.extract_from_track_elements(soup),
+            ),
             ("tlp ID elements", lambda: TrackExtractors.extract_from_tlp_ids(soup)),
             ("text patterns", lambda: TrackExtractors.extract_from_text_patterns(soup)),
         ]
