@@ -178,31 +178,12 @@ class TrackExtractors:
                     artist = TextCleaner.clean_artist_name(parts[0].strip())
                     track = TextCleaner.clean_track_name(parts[1].strip())
 
-                    # Debug logging for specific problematic track
-                    if (
-                        "Prince Of Denmark" in track
-                        or "Ghost Ran Out Of Memory" in track
-                    ):
-                        logger.info(
-                            f"Processing Prince Of Denmark track in structured extraction: artist='{artist}', track='{track}'"
-                        )
-
                     # Skip if the track name contains problematic patterns
                     if (
-                        "[The Gods Planet]" in track
-                        or len(track) > 100
-                        or track.count("[")
-                        > 2  # Allow up to 2 brackets for legitimate track names
+                        len(track) > 100
                         or track.count("(")
                         > 2  # Allow up to 2 parentheses for legitimate track names
                     ):
-                        if (
-                            "Prince Of Denmark" in track
-                            or "Ghost Ran Out Of Memory" in track
-                        ):
-                            logger.warning(
-                                f"Prince Of Denmark track filtered out: track='{track}', length={len(track)}, brackets={track.count('[')}, parentheses={track.count('(')}"
-                            )
                         continue
 
                     if len(artist) > 1 and len(track) > 1:
@@ -218,20 +199,7 @@ class TrackExtractors:
                 artist = TextCleaner.clean_artist_name(parts[0].strip())
                 track = TextCleaner.clean_track_name(parts[1].strip())
 
-                # Debug logging for specific problematic track
-                if "Prince Of Denmark" in track or "Ghost Ran Out Of Memory" in track:
-                    logger.info(
-                        f"Processing Prince Of Denmark track in full text extraction: artist='{artist}', track='{track}'"
-                    )
-
-                if len(track) > 100 or track.count("[") > 2 or track.count("(") > 2:
-                    if (
-                        "Prince Of Denmark" in track
-                        or "Ghost Ran Out Of Memory" in track
-                    ):
-                        logger.warning(
-                            f"Prince Of Denmark track filtered out in full text: track='{track}', length={len(track)}, brackets={track.count('[')}, parentheses={track.count('(')}"
-                        )
+                if len(track) > 100 or track.count("(") > 2:
                     return None
 
                 if len(artist) > 1 and len(track) > 1:
@@ -359,9 +327,6 @@ class TrackExtractors:
         ):
             logger.info(f"Processing ID track from text: '{text}'")
 
-        # Debug logging for specific problematic track
-        if "Prince Of Denmark" in text and "Ghost Ran Out Of Memory" in text:
-            logger.info(f"Processing Prince Of Denmark track: '{text}'")
             # Extract track number and time if present
             track_number, start_time = None, None
             # Try to extract track number and time from the beginning of the text
@@ -380,12 +345,6 @@ class TrackExtractors:
 
             return TrackExtractors._create_domain_track(
                 "ID", "ID", track_number, start_time
-            )
-
-        # Log for debugging
-        if "[The Gods Planet]" in text or "37:00Woo York" in text:
-            logger.info(
-                f"Found problematic text in _extract_track_info_from_text: {text[:100]}"
             )
 
         return TrackExtractors._parse_artist_track_text(text)

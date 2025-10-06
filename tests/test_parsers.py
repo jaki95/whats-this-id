@@ -128,7 +128,6 @@ class TestHTMLParser:
         from whats_this_id.core.parsers.text_cleaners import TextCleaner
         from whats_this_id.core.parsers.track_extractors import TrackExtractors
 
-        # Test the specific track that was reported as missing
         track_text = "Prince Of Denmark - (In The End) The Ghost Ran Out Of Memory (Mind Against Remix)"
 
         # Test that the track can be parsed

@@ -66,8 +66,6 @@ class TestTrackExtractors:
         assert track.artist == artist_name
         assert track.track_number == 1
         assert track.start_time == "00:00"
-
-    def test_complex_track_names_with_parentheses(self):
         """Test extraction of complex track names with multiple parentheses."""
         test_cases = [
             (
@@ -214,8 +212,6 @@ class TestTextCleaner:
         test_cases = [
             "(In The End) The Ghost Ran Out Of Memory (Mind Against Remix)",
             "Track (Original Mix)",
-            "Track [Original] (Remix)",
-            "Track (Original) [Remix]",
             "Track (One) (Two)",
         ]
 

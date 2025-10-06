@@ -30,10 +30,7 @@ class TextCleaner:
 
         for pattern in [
             CLEANUP_PATTERNS["label_and_numbers"],
-            # Skip brackets pattern as it removes valid track names like [Remix], [Original Mix]
-            # CLEANUP_PATTERNS["brackets"],
-            # Skip parentheses pattern as it's too aggressive and removes valid track names
-            # CLEANUP_PATTERNS["parentheses"],
+            CLEANUP_PATTERNS["brackets"],
             CLEANUP_PATTERNS["edit_info"],
             CLEANUP_PATTERNS["user_info"],
         ]:
