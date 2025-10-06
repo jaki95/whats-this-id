@@ -62,7 +62,7 @@ class TracklistManagerService:
             if not hasattr(tracklist, "artist") or tracklist.artist is None:
                 tracklist.artist = "Unknown Artist"
             if not hasattr(tracklist, "year") or tracklist.year is None:
-                tracklist.year = datetime.now().year
+                tracklist.year = datetime.datetime.now().year
             if not hasattr(tracklist, "genre") or tracklist.genre is None:
                 tracklist.genre = "Electronic"
 
