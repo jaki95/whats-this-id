@@ -10,7 +10,7 @@ from whats_this_id.frontend.services.tracklist_orchestrator import (
 class SearchService:
     """Service for handling tracklist searches."""
 
-    async def search_tracklist(self, query_text: str) -> tuple[DomainTracklist, str]:
+    def search_tracklist(self, query_text: str) -> tuple[DomainTracklist, str]:
         """Run tracklist search."""
         tracklist, url = tracklist_orchestrator_service.search_tracklist(query_text)
 

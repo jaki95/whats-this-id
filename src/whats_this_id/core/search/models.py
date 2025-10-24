@@ -1,6 +1,8 @@
-class SearchResult:
+from pydantic import BaseModel
+
+
+class SearchResult(BaseModel):
     """Represents a single search result."""
 
-    def __init__(self, link: str, title: str):
-        self.link = link
-        self.title = title
+    link: str
+    title: str
