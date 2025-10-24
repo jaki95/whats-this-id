@@ -1,21 +1,21 @@
 """
-Example usage of the unified core module.
+Example usage of the core tracklist manager.
 """
 
-from whats_this_id.core import TracklistManager
+from whats_this_id.core.tracklist_manager.manager import TracklistManager
 
 
 def main():
-    """Example of using the unified core module."""
     # Initialize the manager
     manager = TracklistManager()
 
     # Search for a tracklist
     query = "Bassiani invites Chlär"
-    tracklist = manager.run(query)
+    tracklist, url = manager.run(query)
 
     track_count = len(tracklist.tracks)
     print(f"Found {track_count} tracks")
+    print(f"Soundcloud URL: {url}")
 
     for track in tracklist.tracks:
         track_num = (

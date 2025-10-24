@@ -6,13 +6,7 @@ from abc import ABC, abstractmethod
 
 from dj_set_downloader import DomainTracklist
 
-
-class SearchResult:
-    """Represents a single search result."""
-
-    def __init__(self, link: str, title: str):
-        self.link = link
-        self.title = title
+from whats_this_id.core.search.models import SearchResult
 
 
 class SearchStrategy(ABC):

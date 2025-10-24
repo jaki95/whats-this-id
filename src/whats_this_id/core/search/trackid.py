@@ -4,7 +4,7 @@ from dj_set_downloader import DomainTrack, DomainTracklist
 from trackidnet import client
 
 from whats_this_id.core.parsers.timing_utils import TimingUtils
-from whats_this_id.core.search.searcher import SearchResult, SearchStrategy
+from whats_this_id.core.search.strategy import SearchResult, SearchStrategy
 
 
 class TrackIDNetSearchStrategy(SearchStrategy):
