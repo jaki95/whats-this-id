@@ -17,6 +17,6 @@ class SearchStrategy(ABC):
         """Search for tracklists using the given query."""
         pass
 
-    def get_tracklist(self, url: str) -> DomainTracklist:
+    def get_tracklist(self, url: str) -> tuple[DomainTracklist, str]:
         """Get a tracklist from the given URL."""
         pass

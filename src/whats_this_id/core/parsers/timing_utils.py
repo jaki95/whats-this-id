@@ -125,7 +125,7 @@ class TimingUtils:
         return deduped
 
     def _add_intro_track(self, tracks: list[DomainTrack]) -> list[DomainTrack]:
-        if not tracks or tracks[0].start_time == "00:00":
+        if not tracks or self.parse_time(tracks[0].start_time) == timedelta(seconds=0):
             return tracks
 
         first_start = self.parse_time(tracks[0].start_time)
