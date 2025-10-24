@@ -1,9 +1,10 @@
 """Search service for tracklist and SoundCloud searches."""
 
 import asyncio
-from typing import Any, Optional
+from typing import Optional
 
-from whats_this_id.core.scraping.soundcloud import SoundCloudHandler
+from dj_set_downloader import DomainTracklist
+
 from whats_this_id.frontend.services.tracklist_manager_service import (
     get_tracklist_manager_service,
 )
@@ -35,25 +36,8 @@ class SearchService:
             self._tracklist_manager_service = get_tracklist_manager_service()
         return self._tracklist_manager_service
 
-    @property
-    def soundcloud_handler(self) -> SoundCloudHandler:
-        """Get or create the SoundCloud handler (lazy initialization)."""
-        if self._soundcloud_handler is None:
-            self._soundcloud_handler = SoundCloudHandler()
-        return self._soundcloud_handler
-
-    async def search_tracklist_and_soundcloud(
-        self, query_text: str, soundcloud_delay: float = 2.0
-    ) -> tuple[Any, str]:
-        """Run tracklist search and SoundCloud search concurrently with bounded delay.
-
-        Args:
-            query_text: The search query string
-            soundcloud_delay: Delay in seconds before starting SoundCloud search to avoid rate limiting
-
-        Returns:
-            Tuple of (tracklist_result, dj_set_url)
-        """
+    async def search_tracklist_and_soundcloud(self, query_text: str) -> DomainTracklist:
+        """Run tracklist search and SoundCloud search concurrently with bounded delay."""
         # Start both searches concurrently
         loop = asyncio.get_running_loop()
 
@@ -65,50 +49,11 @@ class SearchService:
             query_text.strip(),
         )
 
-        # Start SoundCloud search task with configurable delay
-        soundcloud_task = asyncio.create_task(
-            self.search_soundcloud(query_text, soundcloud_delay)
+        tracklist_result = await asyncio.gather(
+            tracklist_future,
         )
 
-        # Wait for both to complete
-        tracklist_result, dj_set_url = await asyncio.gather(
-            tracklist_future, soundcloud_task
-        )
-
-        # Extract the tracklist from the SearchRun
-        final_tracklist = self.tracklist_manager_service.get_tracklist_from_search_run(
-            tracklist_result
-        )
-
-        return final_tracklist, dj_set_url or ""
-
-    def search_tracklist(self, query_text: str) -> Any:
-        """Search for tracklist only (synchronous).
-
-        Args:
-            query_text: The search query string
-
-        Returns:
-            Tracklist search result
-        """
-        search_run = self.tracklist_manager_service.search_tracklist(query_text.strip())
-        return self.tracklist_manager_service.get_tracklist_from_search_run(search_run)
-
-    async def search_soundcloud(self, query_text: str, delay: float) -> str:
-        """Run SoundCloud search with a bounded delay to respect rate limits.
-
-        Args:
-            query_text: The search query string
-            delay: Delay in seconds before starting the search
-
-        Returns:
-            SoundCloud URL
-        """
-        # Apply bounded delay before starting the search
-        await asyncio.sleep(delay)
-
-        result = await self.soundcloud_handler.find_dj_set_url(query_text)
-        return result or ""
+        return tracklist_result[0][0], tracklist_result[0][1]
 
 
 def get_search_service() -> SearchService:

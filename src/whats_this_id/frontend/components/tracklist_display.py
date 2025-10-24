@@ -2,9 +2,10 @@
 
 import pandas as pd
 import streamlit as st
+from dj_set_downloader import DomainTracklist
 
 
-def render_tracklist_display(tracklist):
+def render_tracklist_display(tracklist: DomainTracklist):
     """Render the tracklist display with metadata and tracks."""
     # Tracklist information
     st.header(f"{tracklist.name} - {tracklist.artist}")
