@@ -10,8 +10,7 @@ class AppConfig:
     APP_TITLE = "What's This ID?"
     APP_ICON = "💿"
     APP_DESCRIPTION = (
-        "Find the IDs of a DJ set using natural language queries "
-        "with AI-powered multi-agent orchestration"
+        "Find the IDs of a DJ set and split the audio into individual tracks"
     )
 
     # Page configuration
