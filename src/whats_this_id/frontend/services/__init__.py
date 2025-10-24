@@ -13,7 +13,6 @@ from .tracklist_orchestrator import (
 __all__ = [
     "SearchService",
     "search_service",
-    "TracklistManagerService",
     "tracklist_orchestrator_service",
     "DJSetProcessorService",
     "djset_processor_service",
