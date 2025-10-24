@@ -2,10 +2,10 @@
 
 import streamlit as st
 
-from whats_this_id.frontend.services.djset_processor import djset_processor_service
 from whats_this_id.frontend.services.djset_processor import (
     DJSetProcessorService,
     JobTracksInfoResponse,
+    djset_processor_service,
 )
 
 

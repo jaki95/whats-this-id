@@ -48,9 +48,7 @@ def _handle_search_action():
         try:
             # Run both searches concurrently
             result, dj_set_url = asyncio.run(
-                search_service.search_tracklist(
-                    st.session_state.query_text
-                )
+                search_service.search_tracklist(st.session_state.query_text)
             )
             # The new manager returns the tracklist directly, no need for .pydantic
             if result is None or (hasattr(result, "tracks") and not result.tracks):

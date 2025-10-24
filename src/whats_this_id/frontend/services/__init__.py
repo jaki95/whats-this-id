@@ -7,7 +7,6 @@ from .djset_processor import (
 )
 from .search import SearchService, search_service
 from .tracklist_orchestrator import (
-    TracklistOrchestratorService,
     tracklist_orchestrator_service,
 )
 

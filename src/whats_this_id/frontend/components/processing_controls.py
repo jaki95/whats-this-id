@@ -89,9 +89,11 @@ def progress_tracker():
     if not st.session_state.processing_job_id:
         st.info("ℹ️ No active processing job")
         return
-    
+
     try:
-        status = djset_processor_service.get_job_status(st.session_state.processing_job_id)
+        status = djset_processor_service.get_job_status(
+            st.session_state.processing_job_id
+        )
         st.session_state.processing_status = status
         _handle_job_status_update(status, djset_processor_service)
 
