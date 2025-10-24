@@ -20,7 +20,7 @@ class TrackIDNetSearchStrategy(SearchStrategy):
             for result in result.results
         ]
 
-    def get_tracklist(self, slug: str) -> DomainTracklist:
+    def get_tracklist(self, slug: str) -> tuple[DomainTracklist, str]:
         result = self.trackidnet.get_tracklist(slug)
         timing_utils = TimingUtils()
         tracks = [
@@ -33,11 +33,12 @@ class TrackIDNetSearchStrategy(SearchStrategy):
             )
             for i, track in enumerate(result.tracks)
         ]
-        tracklist = DomainTracklist(name=result.name, tracks=tracks)
+        # TODO: parse artist from name
+        tracklist = DomainTracklist(name=result.name, tracks=tracks, artist="unknown")
         tracklist.tracks = timing_utils.apply_timing_rules(
             tracklist.tracks, result.duration
         )
-        return tracklist
+        return tracklist, result.url
 
 
 if __name__ == "__main__":
