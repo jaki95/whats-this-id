@@ -11,7 +11,7 @@ def main():
     manager = TracklistManager()
 
     # Search for a tracklist
-    query = "mind against"
+    query = "Bassiani invites Chlär"
     tracklist = manager.run(query)
 
     track_count = len(tracklist.tracks)
