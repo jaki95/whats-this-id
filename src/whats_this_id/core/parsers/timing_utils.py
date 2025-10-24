@@ -35,10 +35,6 @@ class TimingUtils:
         m, s = divmod(remainder, 60)
         return f"{h:02d}:{m:02d}:{s:02d}"
 
-    def _clean_time_string(self, time_str: str | None) -> str | None:
-        """Ensure time string has seconds precision (remove fractional seconds)."""
-        return time_str.split(".")[0] if time_str else time_str
-
     def apply_timing_rules(
         self,
         tracks: list[DomainTrack],

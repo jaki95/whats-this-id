@@ -22,6 +22,7 @@ class TrackIDNetSearchStrategy(SearchStrategy):
 
     def get_tracklist(self, slug: str) -> DomainTracklist:
         result = self.trackidnet.get_tracklist(slug)
+        timing_utils = TimingUtils()
         tracks = [
             DomainTrack(
                 track_number=i + 1,
@@ -33,7 +34,9 @@ class TrackIDNetSearchStrategy(SearchStrategy):
             for i, track in enumerate(result.tracks)
         ]
         tracklist = DomainTracklist(name=result.name, tracks=tracks)
-        TimingUtils.apply_timing_rules(tracklist.tracks, result.duration)
+        tracklist.tracks = timing_utils.apply_timing_rules(
+            tracklist.tracks, result.duration
+        )
         return tracklist
 
 
