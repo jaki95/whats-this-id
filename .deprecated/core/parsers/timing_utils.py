@@ -2,13 +2,9 @@
 Timing utilities for parsing and calculating track durations.
 """
 
-import logging
 import re
 
-from dj_set_downloader import DomainTrack
-
-logger = logging.getLogger(__name__)
-
+from whats_this_id.core.common import DomainTrack, logger
 
 
 class TimingUtils:
