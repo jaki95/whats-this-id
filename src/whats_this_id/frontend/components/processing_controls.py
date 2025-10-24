@@ -4,10 +4,10 @@ import streamlit as st
 from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
 from whats_this_id.frontend.components.download_section import render_download_section
-from whats_this_id.frontend.services import (
+from whats_this_id.frontend.services.djset_processor import (
     DJSetProcessorService,
     display_api_error,
-    get_dj_set_processor_service,
+    djset_processor_service,
 )
 from whats_this_id.frontend.state import clear_processing_state
 
@@ -71,13 +71,12 @@ def _handle_job_status_update(status, api_service: DJSetProcessorService) -> Non
 
 def process_dj_set_with_progress(dj_set_url: str, tracklist: DomainTracklist):
     """Process DJ set with real-time progress updates in Streamlit."""
-    api_service = get_dj_set_processor_service()
 
     try:
-        if not _check_service_health(api_service):
+        if not _check_service_health(djset_processor_service):
             return
 
-        _submit_processing_job(dj_set_url, tracklist, api_service)
+        _submit_processing_job(dj_set_url, tracklist, djset_processor_service)
 
     except Exception as e:
         st.error(f"Error processing DJ set: {e}")
@@ -90,13 +89,11 @@ def progress_tracker():
     if not st.session_state.processing_job_id:
         st.info("ℹ️ No active processing job")
         return
-
-    api_service = get_dj_set_processor_service()
-
+    
     try:
-        status = api_service.get_job_status(st.session_state.processing_job_id)
+        status = djset_processor_service.get_job_status(st.session_state.processing_job_id)
         st.session_state.processing_status = status
-        _handle_job_status_update(status, api_service)
+        _handle_job_status_update(status, djset_processor_service)
 
     except Exception as e:
         st.error(f"Error checking job status: {e}")

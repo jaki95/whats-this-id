@@ -31,29 +31,13 @@ MIN_ZIP_SIZE = 4  # Minimum bytes needed to validate ZIP signature
 class DJSetProcessorService:
     """Service for managing DJ set processor API operations."""
 
-    _instance: DJSetProcessorService | None = None
-    _initialized: bool = False
-
-    def __new__(cls) -> DJSetProcessorService:
-        """Singleton pattern implementation."""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
     def __init__(self, base_url: str = AppConfig.DEFAULT_API_BASE_URL) -> None:
-        """Initialize the API service with configuration (only once).
-
-        Args:
-            base_url: Base URL for the DJ set processor API
-        """
-        if not self._initialized:
-            config = Configuration(host=base_url)
-            self.api_client = ApiClient(configuration=config)
-            self.system_api = SystemApi(self.api_client)
-            self.process_api = ProcessApi(self.api_client)
-            self.jobs_api = JobsApi(self.api_client)
-            self.downloads_api = DownloadsApi(self.api_client)
-            self._initialized = True
+        config = Configuration(host=base_url)
+        self.api_client = ApiClient(configuration=config)
+        self.system_api = SystemApi(self.api_client)
+        self.process_api = ProcessApi(self.api_client)
+        self.jobs_api = JobsApi(self.api_client)
+        self.downloads_api = DownloadsApi(self.api_client)
 
     def check_health(self) -> tuple[bool, str]:
         """Check if the DJ set processor service is healthy.
@@ -77,17 +61,7 @@ class DJSetProcessorService:
         file_extension: str = AppConfig.DEFAULT_FILE_EXTENSION,
         max_concurrent_tasks: int = AppConfig.DEFAULT_MAX_CONCURRENT_TASKS,
     ) -> tuple[bool, str, str | None]:
-        """Submit a DJ set processing job.
-
-        Args:
-            dj_set_url: URL of the DJ set to process
-            tracklist: Tracklist data for the DJ set
-            file_extension: File extension for downloaded tracks
-            max_concurrent_tasks: Maximum number of concurrent download tasks
-
-        Returns:
-            Tuple of (success, message, job_id)
-        """
+        """Submit a DJ set processing job."""
         try:
             response = self.process_api.api_process_post_with_http_info(
                 request=JobRequest(
@@ -110,14 +84,8 @@ class DJSetProcessorService:
     def get_job_status(self, job_id: str) -> JobStatus | None:
         """Get the status of a processing job.
 
-        Args:
-            job_id: ID of the job to check
-
         Returns:
             JobStatus object if successful, None if failed
-
-        Raises:
-            Exception: If there's an error checking job status
         """
         try:
             response = self.jobs_api.api_jobs_id_get_with_http_info(job_id)
@@ -130,9 +98,6 @@ class DJSetProcessorService:
 
     def cancel_job(self, job_id: str) -> bool:
         """Cancel a processing job.
-
-        Args:
-            job_id: ID of the job to cancel
 
         Returns:
             True if successful, False otherwise
@@ -149,9 +114,6 @@ class DJSetProcessorService:
 
     def download_all_tracks(self, job_id: str) -> Optional[tuple[bytearray, str]]:
         """Download all tracks as ZIP with proper error handling.
-
-        Args:
-            job_id: The processing job ID
 
         Returns:
             Tuple of (file_data, filename) if successful, None if failed
@@ -181,10 +143,6 @@ class DJSetProcessorService:
     ) -> tuple[bytearray, str] | None:
         """Download a single track file.
 
-        Args:
-            job_id: The processing job ID
-            track_number: Number of the track to download
-
         Returns:
             Tuple of (file_data, filename) if successful, None if failed
         """
@@ -208,9 +166,6 @@ class DJSetProcessorService:
     def get_tracks_info(self, job_id: str) -> JobTracksInfoResponse | None:
         """Get detailed track information for a completed job.
 
-        Args:
-            job_id: The processing job ID
-
         Returns:
             JobTracksInfoResponse object if successful, None if failed
         """
@@ -227,9 +182,6 @@ class DJSetProcessorService:
     def _is_valid_zip_file(self, file_data: bytes | bytearray | None) -> bool:
         """Validate if the given data represents a valid ZIP file.
 
-        Args:
-            file_data: The file data to validate
-
         Returns:
             True if valid ZIP file, False otherwise
         """
@@ -241,9 +193,6 @@ class DJSetProcessorService:
     @staticmethod
     def get_mime_type(filename: str) -> str:
         """Get MIME type for a file based on its extension.
-
-        Args:
-            filename: Name of the file
 
         Returns:
             MIME type string
@@ -262,9 +211,6 @@ class DJSetProcessorService:
     def format_file_size(size_bytes: int) -> str:
         """Format file size in human readable format.
 
-        Args:
-            size_bytes: Size in bytes
-
         Returns:
             Formatted size string (e.g., "1.5 MB")
         """
@@ -282,13 +228,7 @@ class DJSetProcessorService:
         return f"{size:.1f} {size_names[i]}"
 
 
-def get_dj_set_processor_service() -> DJSetProcessorService:
-    """Get the singleton API service instance.
-
-    Returns:
-        DJSetProcessorService instance
-    """
-    return DJSetProcessorService()
+djset_processor_service = DJSetProcessorService()
 
 
 def display_api_error(message: str, show_service_hint: bool = True) -> None:

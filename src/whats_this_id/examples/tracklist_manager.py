@@ -1,17 +1,17 @@
 """
-Example usage of the core tracklist manager.
+Example usage of the core tracklist orchestrator.
 """
 
-from whats_this_id.core.tracklist_manager.manager import TracklistManager
+from whats_this_id.core.orchestration.orchestrator import Orchestrator
 
 
 def main():
-    # Initialize the manager
-    manager = TracklistManager()
+    # Initialize the orchestrator
+    orchestrator = Orchestrator()
 
     # Search for a tracklist
     query = "Bassiani invites Chlär"
-    tracklist, url = manager.run(query)
+    tracklist, url = orchestrator.run(query)
 
     track_count = len(tracklist.tracks)
     print(f"Found {track_count} tracks")
