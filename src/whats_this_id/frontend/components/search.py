@@ -5,7 +5,7 @@ import asyncio
 import streamlit as st
 
 from whats_this_id.frontend.config import AppConfig
-from whats_this_id.frontend.services import get_search_service
+from whats_this_id.frontend.services.search import search_service
 from whats_this_id.frontend.state import update_search_results
 
 
@@ -44,15 +44,11 @@ def _handle_search_action():
         st.warning("Please enter a search query.")
         return
 
-    search_service = get_search_service()
-
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
             # Run both searches concurrently
             result, dj_set_url = asyncio.run(
-                search_service.search_tracklist_and_soundcloud(
-                    st.session_state.query_text
-                )
+                search_service.search_tracklist(st.session_state.query_text)
             )
             # The new manager returns the tracklist directly, no need for .pydantic
             if result is None or (hasattr(result, "tracks") and not result.tracks):

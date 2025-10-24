@@ -2,10 +2,10 @@
 
 import streamlit as st
 
-from whats_this_id.frontend.services import get_dj_set_processor_service
-from whats_this_id.frontend.services.dj_set_processor import (
+from whats_this_id.frontend.services.djset_processor import (
     DJSetProcessorService,
     JobTracksInfoResponse,
+    djset_processor_service,
 )
 
 
@@ -36,14 +36,12 @@ def render_download_section(job_id: str) -> None:
     Args:
         job_id: The completed processing job ID
     """
-    processor_service = get_dj_set_processor_service()
-
     st.subheader("Download Processed Tracks")
 
-    tracks_info = processor_service.get_tracks_info(job_id)
+    tracks_info = djset_processor_service.get_tracks_info(job_id)
 
     if tracks_info:
-        _render_tracks_download_options(job_id, tracks_info, processor_service)
+        _render_tracks_download_options(job_id, tracks_info, djset_processor_service)
 
 
 def _render_tracks_download_options(

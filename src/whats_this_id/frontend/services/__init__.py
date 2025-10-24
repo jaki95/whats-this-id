@@ -1,22 +1,20 @@
 """Services for the What's This ID frontend application."""
 
-from .dj_set_processor import (
+from .djset_processor import (
     DJSetProcessorService,
     display_api_error,
-    get_dj_set_processor_service,
+    djset_processor_service,
 )
-from .search_service import SearchService, get_search_service
-from .tracklist_manager_service import (
-    TracklistManagerService,
-    get_tracklist_manager_service,
+from .search import SearchService, search_service
+from .tracklist_orchestrator import (
+    tracklist_orchestrator_service,
 )
 
 __all__ = [
     "SearchService",
-    "get_search_service",
-    "TracklistManagerService",
-    "get_tracklist_manager_service",
+    "search_service",
+    "tracklist_orchestrator_service",
     "DJSetProcessorService",
-    "get_dj_set_processor_service",
+    "djset_processor_service",
     "display_api_error",
 ]

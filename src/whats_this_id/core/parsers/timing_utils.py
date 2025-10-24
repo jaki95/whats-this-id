@@ -1,154 +1,199 @@
 """
-Timing utilities for parsing and calculating track durations.
+Timing utilities for parsing, formatting, and adjusting track timings.
 """
 
-import re
+import logging
+from datetime import timedelta
 
-from whats_this_id.core.common import DomainTrack, logger
+from dj_set_downloader import DomainTrack
+
+logger = logging.getLogger(__name__)
 
 
 class TimingUtils:
-    """Utility class for handling timing operations."""
+    """Utility class for handling timing operations and track alignment."""
 
-    @staticmethod
-    def is_valid_duration(duration: str) -> bool:
-        """Check if a duration string looks like a valid total duration."""
-        try:
-            parts = duration.split(":")
-            if len(parts) == 2:  # mm:ss
-                minutes, seconds = int(parts[0]), int(parts[1])
-                total_minutes = minutes + seconds / 60
-                # Reasonable duration range: 30 minutes to 8 hours
-                return 30 <= total_minutes <= 480
-            elif len(parts) == 3:  # hh:mm:ss
-                hours, minutes, seconds = int(parts[0]), int(parts[1]), int(parts[2])
-                total_minutes = hours * 60 + minutes + seconds / 60
-                # Reasonable duration range: 30 minutes to 8 hours
-                return 30 <= total_minutes <= 480
-            else:
-                return False
-        except (ValueError, AttributeError):
-            return False
+    def parse_time(self, t: str) -> timedelta:
+        """Convert 'H:MM:SS' or 'MM:SS' string to timedelta."""
+        if not t:
+            raise ValueError("Empty time string")
 
-    @staticmethod
-    def calculate_duration_between_times(start_time: str, end_time: str) -> int:
-        """Calculate duration in seconds between two time strings (hh:mm:ss or mm:ss)."""
-        try:
-            start_seconds = TimingUtils.time_to_seconds(start_time)
-            end_seconds = TimingUtils.time_to_seconds(end_time)
-            return end_seconds - start_seconds
-        except (ValueError, AttributeError):
-            return 0
+        # Remove fractional seconds by splitting on '.' and taking the first part
+        t = t.split(".")[0]
+        parts = [int(x) for x in t.split(":")]
 
-    @staticmethod
-    def time_to_seconds(time_str: str) -> int:
-        """Convert time string (hh:mm:ss or mm:ss) to seconds."""
-        parts = time_str.split(":")
-        if len(parts) == 2:  # mm:ss
-            minutes, seconds = int(parts[0]), int(parts[1])
-            return minutes * 60 + seconds
-        elif len(parts) == 3:  # hh:mm:ss
-            hours, minutes, seconds = int(parts[0]), int(parts[1]), int(parts[2])
-            return hours * 3600 + minutes * 60 + seconds
-        else:
-            raise ValueError(f"Invalid time format: {time_str}")
+        if len(parts) == 2:
+            return timedelta(minutes=parts[0], seconds=parts[1])
+        if len(parts) == 3:
+            return timedelta(hours=parts[0], minutes=parts[1], seconds=parts[2])
 
-    @staticmethod
-    def extract_track_number_and_time(text: str) -> tuple[int | None, str | None]:
-        """Extract track number and start time from text."""
-        track_number = None
-        start_time = None
+        raise ValueError(f"Invalid time format: {t}")
 
-        # Extract track number: "01", "02", etc.
-        track_match = re.search(r"^\s*(\d+)\s+", text)
-        if track_match:
-            track_number = int(track_match.group(1))
+    def format_time(self, td: timedelta) -> str:
+        """Convert timedelta to 'HH:MM:SS' format."""
+        total_seconds = int(td.total_seconds())
+        h, remainder = divmod(total_seconds, 3600)
+        m, s = divmod(remainder, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
 
-        # Extract time: "02:30", "08:12", "2:01:30", etc.
-        time_match = re.search(r"^\s*\d+\s+(\d+:\d+(?::\d+)?)\s+", text)
-        if time_match:
-            start_time = time_match.group(1)
-
-        return track_number, start_time
-
-    @staticmethod
     def apply_timing_rules(
-        tracks: list[DomainTrack], total_duration: str | None = None
+        self,
+        tracks: list[DomainTrack],
+        total_duration: str | None = None,
     ) -> list[DomainTrack]:
-        """Apply timing rules to tracks:
-        1. First track should always start at 00:00
-        2. End time of a track is the start time of the next track
-        3. Last track end time is set to the total duration of the set
+        """
+        Apply timing rules to a list of tracks.
         """
         if not tracks:
             return tracks
 
         logger.info(
-            f"Applying timing rules to {len(tracks)} tracks, total_duration: {total_duration}"
+            f"Applying timing rules to {len(tracks)} tracks (total_duration={total_duration})"
         )
 
-        # Rule 1: First track always starts at 00:00
-        if tracks[0].start_time != "00:00":
-            tracks[0].start_time = "00:00"
+        # Sort and deduplicate
+        tracks = sorted(tracks, key=lambda t: self.parse_time(t.start_time))
+        tracks = self._deduplicate_tracks(tracks)
 
-        # Rule 2: Set end times based on next track's start time
-        for i in range(len(tracks)):
-            if i < len(tracks) - 1:
-                # Set end time to the start time of the next track
-                tracks[i].end_time = tracks[i + 1].start_time
-            else:
-                # Last track - set end time to the total duration of the set
-                if total_duration:
-                    tracks[i].end_time = total_duration
-                    logger.info(
-                        f"Set last track end time to total duration: {total_duration}"
-                    )
-                else:
-                    # No total duration available - leave end_time as None
-                    # This indicates that the duration extraction failed
-                    tracks[i].end_time = None
-                    logger.warning("No total duration available for last track")
+        # Add intro "ID - ID" if needed
+        tracks = self._add_intro_track(tracks)
+
+        # Set missing end times
+        for i, track in enumerate(tracks):
+            if not track.end_time:
+                if i < len(tracks) - 1:
+                    track.end_time = tracks[i + 1].start_time
+                    logger.debug(f"Filled missing end_time for track {i + 1}")
+                elif total_duration:
+                    track.end_time = total_duration
+                    logger.debug("Filled last track end_time from total_duration")
+
+        # Process gaps between tracks
+        tracks = self._process_gaps(tracks)
+
+        # Renumber sequentially
+        for i, track in enumerate(tracks, start=1):
+            track.track_number = i
+
+        # Normalise all time strings to HH:MM:SS format
+        for track in tracks:
+            if track.start_time:
+                track.start_time = self.format_time(self.parse_time(track.start_time))
+            if track.end_time:
+                track.end_time = self.format_time(self.parse_time(track.end_time))
 
         return tracks
 
-    @staticmethod
-    def extract_total_duration_from_text(text: str) -> str | None:
-        """Extract the total duration of the DJ set from text content."""
-        # More comprehensive patterns for 1001tracklists
-        # Order matters - more specific patterns first
-        text_patterns = [
-            # Player duration patterns
-            r"Player\s+\d+\s*\[(\d+:\d+(?::\d+)?)\]",
-            # Standard duration patterns
-            r"Duration:?\s*(\d+:\d+(?::\d+)?)",
-            r"Length:?\s*(\d+:\d+(?::\d+)?)",
-            r"Time:?\s*(\d+:\d+(?::\d+)?)",
-            r"Total:?\s*(\d+:\d+(?::\d+)?)",
-            # 1001tracklists specific patterns
-            r"(\d+:\d+(?::\d+)?)\s*set",
-            r"(\d+:\d+(?::\d+)?)\s*mix",
-            r"(\d+:\d+(?::\d+)?)\s*show",
-            r"(\d+:\d+(?::\d+)?)\s*episode",
-            # Look for time patterns in various contexts
-            r"(\d+:\d+(?::\d+)?)\s*(?:total|complete|full)",
-            r"(?:total|complete|full)\s*(\d+:\d+(?::\d+)?)",
-            # Look for time patterns that might be durations (longer than typical track times)
-            r"(\d+:\d{2}:\d{2})",  # hh:mm:ss format
-            # Lower priority patterns (these might match track times)
-            r"(\d+:\d+(?::\d+)?)\s*(?:min|hour|hr|h|m)",
-            r"(\d+:\d+(?::\d+)?)\s*duration",
-            r"(\d+:\d+(?::\d+)?)\s*length",
-            r"(\d{2}:\d{2})",  # mm:ss format (but be careful not to match track times)
-        ]
+    def _deduplicate_tracks(self, tracks: list[DomainTrack]) -> list[DomainTrack]:
+        """Remove duplicate tracks (same artist + title), merging timing ranges."""
+        if not tracks:
+            return tracks
 
-        # Check text-based patterns
-        for pattern in text_patterns:
-            matches = re.findall(pattern, text, re.I)
-            for match in matches:
-                duration = match
-                # Validate that this looks like a reasonable duration
-                if TimingUtils.is_valid_duration(duration):
-                    logger.info(f"Found total duration in text: {duration}")
-                    return duration
+        seen: dict[tuple[str, str], DomainTrack] = {}
+        deduped: list[DomainTrack] = []
 
-        return None
+        for track in tracks:
+            key = (track.artist.lower().strip(), track.name.lower().strip())
+
+            if key not in seen:
+                seen[key] = track
+                deduped.append(track)
+                continue
+
+            existing = seen[key]
+            existing_start = self.parse_time(existing.start_time)
+            existing_end = (
+                self.parse_time(existing.end_time)
+                if existing.end_time
+                else existing_start
+            )
+            current_start = self.parse_time(track.start_time)
+            current_end = (
+                self.parse_time(track.end_time) if track.end_time else current_start
+            )
+
+            merged_start = min(existing_start, current_start)
+            merged_end = max(existing_end, current_end)
+            existing.start_time = self.format_time(merged_start)
+            existing.end_time = self.format_time(merged_end)
+
+            logger.debug(
+                f"Merged duplicate track: {track.artist} - {track.name} "
+                f"({existing.start_time} -> {existing.end_time})"
+            )
+
+        return deduped
+
+    def _add_intro_track(self, tracks: list[DomainTrack]) -> list[DomainTrack]:
+        if not tracks or self.parse_time(tracks[0].start_time) == timedelta(seconds=0):
+            return tracks
+
+        first_start = self.parse_time(tracks[0].start_time)
+        if first_start > timedelta(seconds=0):
+            intro_track = DomainTrack(
+                track_number=None,
+                name="ID",
+                artist="ID",
+                start_time=self.format_time(timedelta(seconds=0)),
+                end_time=self.format_time(first_start),
+            )
+            tracks.insert(0, intro_track)
+            logger.debug(f"Inserted intro ID track: 00:00 -> {intro_track.end_time}")
+        return tracks
+
+    def _process_gaps(
+        self, tracks: list[DomainTrack], min_gap: timedelta = timedelta(seconds=60)
+    ) -> list[DomainTrack]:
+        """
+        Process gaps between tracks.
+        If the gap is longer than min_gap, insert an ID track.
+        If the gap is shorter than min_gap, adjust the previous
+        end time and the next start time to the midpoint of the gap.
+        """
+        adjusted_tracks = []
+
+        for i, track in enumerate(tracks):
+            start = self.parse_time(track.start_time)
+            end = self.parse_time(track.end_time) if track.end_time else start
+            adjusted_tracks.append(track)
+
+            if i == len(tracks) - 1:
+                continue  # skip last, handled later
+
+            next_track = tracks[i + 1]
+            next_start = self.parse_time(next_track.start_time)
+            gap = next_start - end
+
+            if gap < timedelta(seconds=0):
+                logger.warning(
+                    f"Overlap detected: {track.artist} → {next_track.artist} ({abs(gap)} overlap)"
+                )
+                continue
+
+            if gap > min_gap:
+                # Insert ID track for long gap
+                id_track = DomainTrack(
+                    track_number=None,
+                    name="ID",
+                    artist="ID",
+                    start_time=self.format_time(end),
+                    end_time=self.format_time(next_start),
+                )
+                adjusted_tracks.append(id_track)
+                logger.debug(
+                    f"Inserted gap ID track: {id_track.start_time} → {id_track.end_time} (gap={gap})"
+                )
+
+            elif gap > timedelta(seconds=0):
+                midpoint = end + gap / 2
+                midpoint_str = self.format_time(midpoint)
+
+                # Adjust previous end & next start
+                adjusted_tracks[-1].end_time = midpoint_str
+                next_track.start_time = midpoint_str
+                logger.debug(
+                    f"Adjusted short gap ({gap}): midpoint {midpoint_str} "
+                    f"between '{track.name}' and '{next_track.name}'"
+                )
+
+        return adjusted_tracks
