@@ -18,7 +18,8 @@ class TimingUtils:
         if not t:
             raise ValueError("Empty time string")
 
-        t = t.split(".")[0]  # remove fractional seconds
+        # Remove fractional seconds by splitting on '.' and taking the first part
+        t = t.split(".")[0]
         parts = [int(x) for x in t.split(":")]
 
         if len(parts) == 2:
@@ -41,12 +42,7 @@ class TimingUtils:
         total_duration: str | None = None,
     ) -> list[DomainTrack]:
         """
-        Apply timing rules to a list of tracks:
-        1. Add 'ID - ID' if the first track doesn't start at 00:00.
-        2. Insert 'ID - ID' for gaps > 1 minute.
-        3. Merge close tracks (gap < 1 minute) by setting midpoint.
-        4. Deduplicate identical tracks.
-        5. Ensure all tracks have valid end times.
+        Apply timing rules to a list of tracks.
         """
         if not tracks:
             return tracks
@@ -59,10 +55,10 @@ class TimingUtils:
         tracks = sorted(tracks, key=lambda t: self.parse_time(t.start_time))
         tracks = self._deduplicate_tracks(tracks)
 
-        # 1. Add intro "ID - ID" if needed
+        # Add intro "ID - ID" if needed
         tracks = self._add_intro_track(tracks)
 
-        # 3. Set missing end times
+        # Set missing end times
         for i, track in enumerate(tracks):
             if not track.end_time:
                 if i < len(tracks) - 1:
@@ -72,12 +68,19 @@ class TimingUtils:
                     track.end_time = total_duration
                     logger.debug("Filled last track end_time from total_duration")
 
-        # 2. Process gaps between tracks
+        # Process gaps between tracks
         tracks = self._process_gaps(tracks)
 
-        # 4. Renumber sequentially
+        # Renumber sequentially
         for i, track in enumerate(tracks, start=1):
             track.track_number = i
+
+        # Normalise all time strings to HH:MM:SS format
+        for track in tracks:
+            if track.start_time:
+                track.start_time = self.format_time(self.parse_time(track.start_time))
+            if track.end_time:
+                track.end_time = self.format_time(self.parse_time(track.end_time))
 
         return tracks
 
