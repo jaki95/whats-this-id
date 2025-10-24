@@ -8,4 +8,4 @@ run-backend:
 
 # Run the linter
 lint:
-	uv run ruff check --fix && uv run isort --check --profile black . && uv run ruff format
+	uv run ruff check --fix && uv run isort --profile black . && uv run ruff format
