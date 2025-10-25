@@ -14,7 +14,7 @@ class SearchService:
     def search_tracklist(self, query_text: str) -> list:
         """Run tracklist search."""
         return self.orchestrator.search_tracklist(query_text)
-    
+
     def get_tracklist_for_result(self, search_result) -> tuple[DomainTracklist, str]:
         """Get full tracklist for a specific search result."""
         return self.orchestrator.get_tracklist_for_result(search_result)

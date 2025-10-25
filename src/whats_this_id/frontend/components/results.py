@@ -15,13 +15,17 @@ def render_results_section():
     # Only show if a result is selected
     if st.session_state.selected_result_index is None:
         return
-    
+
     # If tracklist is not loaded yet, fetch it
     if not st.session_state.tracklist:
         with st.spinner("Loading tracklist details..."):
             try:
-                selected_result = st.session_state.search_results[st.session_state.selected_result_index]
-                tracklist, dj_set_url = search_service.get_tracklist_for_result(selected_result)
+                selected_result = st.session_state.search_results[
+                    st.session_state.selected_result_index
+                ]
+                tracklist, dj_set_url = search_service.get_tracklist_for_result(
+                    selected_result
+                )
                 st.session_state.tracklist = tracklist
                 st.session_state.dj_set_url = dj_set_url
             except Exception as e:
