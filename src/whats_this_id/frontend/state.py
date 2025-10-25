@@ -7,6 +7,10 @@ def initialize_session_state():
     """Initialize all session state variables."""
     if "query_text" not in st.session_state:
         st.session_state.query_text = ""
+    if "search_results" not in st.session_state:
+        st.session_state.search_results = []
+    if "selected_result_index" not in st.session_state:
+        st.session_state.selected_result_index = None
     if "tracklist" not in st.session_state:
         st.session_state.tracklist = None
     if "dj_set_url" not in st.session_state:
@@ -42,10 +46,21 @@ def clear_download_state():
         del st.session_state[key]
 
 
-def update_search_results(tracklist, dj_set_url):
-    """Update session state with search results."""
-    st.session_state.tracklist = tracklist
-    st.session_state.dj_set_url = dj_set_url
+def update_search_results(search_results):
+    """Update session state with multiple search results."""
+    st.session_state.search_results = search_results
+    st.session_state.selected_result_index = None
+    st.session_state.tracklist = None
+    st.session_state.dj_set_url = None
     # Clear any existing processing/download state when new search is performed
     clear_processing_state()
     clear_download_state()
+
+
+def select_search_result(index: int):
+    """Select a specific search result and update the tracklist."""
+    if 0 <= index < len(st.session_state.search_results):
+        st.session_state.selected_result_index = index
+        # The tracklist and URL will be fetched when needed
+        st.session_state.tracklist = None
+        st.session_state.dj_set_url = None

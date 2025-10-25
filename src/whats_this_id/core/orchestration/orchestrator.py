@@ -19,7 +19,7 @@ class Orchestrator:
     def __init__(self, search_strategy: SearchStrategy = TrackIDNetSearchStrategy()):
         self.search_strategy = search_strategy
 
-    def run(self, query: str) -> list[SearchResult]:
+    def search_tracklist(self, query: str) -> list[SearchResult]:
         """Run a search operation and return search results metadata only."""
         search_results = self.search_strategy.search(query)
         if not search_results:
