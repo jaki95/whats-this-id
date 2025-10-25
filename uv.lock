@@ -1074,16 +1074,16 @@ wheels = [
 
 [[package]]
 name = "trackidnet"
-version = "0.0.3"
+version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "ruff" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/8a/63e346442bec426c26f2eae3ac545ab9cdbbfd4a62d6c63ce084a8ba3afb/trackidnet-0.0.3.tar.gz", hash = "sha256:c9e1b3288d0944d983ea3299b23b7ed9eab4a5a56b2dc41b5591ba8843e4cbfe", size = 31293, upload-time = "2025-10-23T22:25:28.877Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/74/768cab27faa6d619edf262a02c01f95a83e565eefb7d0351fbacf2d07b94/trackidnet-0.0.4.tar.gz", hash = "sha256:3a8314cc576b1e0d705c3fe43e210a6c2daf7b9053fd55cc5a159c5be25a0b05", size = 31292, upload-time = "2025-10-25T13:46:56.411Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/ba/c34457099f0dac58c72bbcea660410677f5ab416bd0992707220e41186b2/trackidnet-0.0.3-py3-none-any.whl", hash = "sha256:dc4d4272884b67498e685c8a77d1b9750de4b63152b013ad796f7ed0185300aa", size = 2501, upload-time = "2025-10-23T22:25:28.028Z" },
+    { url = "https://files.pythonhosted.org/packages/86/f6/1ad8cc6886c3ae3e32da869c3464b62f79604eac0802a3a3a3ccf83e780c/trackidnet-0.0.4-py3-none-any.whl", hash = "sha256:e678ef18ca77f32f0f0d2e2af962686f64d9088a7ffaa98819c15d14eac9d382", size = 2495, upload-time = "2025-10-25T13:46:55.259Z" },
 ]
 
 [[package]]
@@ -1169,7 +1169,7 @@ requires-dist = [
     { name = "dj-set-downloader", specifier = ">=0.1.3" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "streamlit", specifier = ">=1.45.1" },
-    { name = "trackidnet", specifier = "==0.0.3" },
+    { name = "trackidnet", specifier = ">=0.0.4" },
 ]
 
 [package.metadata.requires-dev]
