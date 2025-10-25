@@ -1,10 +1,10 @@
 """Download section component for completed processing jobs."""
 
 import streamlit as st
+from dj_set_downloader import JobTracksInfoResponse
 
 from whats_this_id.frontend.services.djset_processor import (
-    DJSetProcessorService,
-    JobTracksInfoResponse,
+    FrontendDJSetProcessorService,
     djset_processor_service,
 )
 
@@ -47,7 +47,7 @@ def render_download_section(job_id: str) -> None:
 def _render_tracks_download_options(
     job_id: str,
     tracks_info: JobTracksInfoResponse,
-    processor_service: DJSetProcessorService,
+    processor_service: FrontendDJSetProcessorService,
 ) -> None:
     """Render download options when detailed track info is available."""
 

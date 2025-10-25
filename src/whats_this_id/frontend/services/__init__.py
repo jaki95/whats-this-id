@@ -1,14 +1,16 @@
-"""Services for the What's This ID frontend application."""
+"""Frontend services for the What's This ID application."""
+
+# Import core services for direct access if needed
+from whats_this_id.core.services import SearchService, search_service
 
 from .djset_processor import (
-    DJSetProcessorService,
+    FrontendDJSetProcessorService,
     display_api_error,
     djset_processor_service,
 )
-from .search_service import SearchService, search_service
 
 __all__ = [
-    "DJSetProcessorService",
+    "FrontendDJSetProcessorService",
     "djset_processor_service",
     "display_api_error",
     "SearchService",
