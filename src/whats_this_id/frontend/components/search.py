@@ -1,7 +1,5 @@
 """Search component for tracklist queries."""
 
-import asyncio
-
 import streamlit as st
 
 from whats_this_id.frontend.config import AppConfig
@@ -46,12 +44,10 @@ def _handle_search_action():
 
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
-            # Run both searches concurrently
-            result, dj_set_url = asyncio.run(
-                search_service.search_tracklist(st.session_state.query_text)
-            )
-            # The new manager returns the tracklist directly, no need for .pydantic
-            if result is None or (hasattr(result, "tracks") and not result.tracks):
+            # Run search and get multiple results
+            search_results = search_service.search_tracklist(st.session_state.query_text)
+            
+            if not search_results:
                 st.warning(
                     "🔍 No tracklists found for your query. Try adjusting your search terms or check the spelling."
                 )
@@ -59,7 +55,7 @@ def _handle_search_action():
                     "💡 **Tips for better results:**\n- Include the DJ/artist name and event name\n- Try different variations of the name\n- Be more specific about the event or venue"
                 )
             else:
-                update_search_results(result, dj_set_url)
+                update_search_results(search_results)
 
         except Exception as e:
             error_msg = str(e)
