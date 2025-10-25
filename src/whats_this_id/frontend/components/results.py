@@ -23,7 +23,7 @@ def render_results_section():
                 selected_result = st.session_state.search_results[
                     st.session_state.selected_result_index
                 ]
-                tracklist, dj_set_url = search_service._strategy.get_tracklist(
+                tracklist, dj_set_url = search_service.get_tracklist(
                     selected_result.link
                 )
                 st.session_state.tracklist = tracklist

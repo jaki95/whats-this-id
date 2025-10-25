@@ -5,7 +5,10 @@ import streamlit as st
 from whats_this_id.frontend.config import AppConfig
 from whats_this_id.frontend.services import search_service
 from whats_this_id.frontend.state import update_search_results
-from whats_this_id.frontend.utils import display_no_results_message, display_search_error
+from whats_this_id.frontend.utils import (
+    display_no_results_message,
+    display_search_error,
+)
 
 
 def render_search_section():
@@ -46,7 +49,7 @@ def _handle_search_action():
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
             # Run search and get multiple results
-            search_results = search_service._strategy.search(st.session_state.query_text)
+            search_results = search_service.search(st.session_state.query_text)
 
             if not search_results:
                 display_no_results_message()
