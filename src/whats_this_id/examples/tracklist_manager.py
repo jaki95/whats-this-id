@@ -2,16 +2,17 @@
 Example usage of the core tracklist orchestrator.
 """
 
-from whats_this_id.core.orchestration.orchestrator import Orchestrator
+from whats_this_id.core.search.trackid import TrackIDNetSearchStrategy
 
 
 def main():
-    # Initialize the orchestrator
-    orchestrator = Orchestrator()
+    # Initialize the search strategy
+    search_strategy = TrackIDNetSearchStrategy()
 
     # Search for a tracklist
     query = "Bassiani invites Chlär"
-    tracklist, url = orchestrator.run(query)
+    tracklist_results = search_strategy.search(query)
+    tracklist, url = search_strategy.get_tracklist(tracklist_results[0].link)
 
     track_count = len(tracklist.tracks)
     print(f"Found {track_count} tracks")

@@ -2,8 +2,8 @@
 
 import streamlit as st
 
+from whats_this_id.core.search.trackid import TrackIDNetSearchStrategy
 from whats_this_id.frontend.config import AppConfig
-from whats_this_id.frontend.services.search import search_service
 from whats_this_id.frontend.state import update_search_results
 
 
@@ -38,6 +38,8 @@ def render_search_section():
 
 def _handle_search_action():
     """Handle the search button action."""
+    # TODO: Make this configurable
+    search_strategy = TrackIDNetSearchStrategy()
     if not st.session_state.query_text.strip():
         st.warning("Please enter a search query.")
         return
@@ -45,7 +47,7 @@ def _handle_search_action():
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
             # Run search and get multiple results
-            search_results = search_service.search_tracklist(
+            search_results = search_strategy.search(
                 st.session_state.query_text
             )
 

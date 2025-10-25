@@ -5,11 +5,8 @@ from .djset_processor import (
     display_api_error,
     djset_processor_service,
 )
-from .search import SearchService, search_service
 
 __all__ = [
-    "SearchService",
-    "search_service",
     "DJSetProcessorService",
     "djset_processor_service",
     "display_api_error",
