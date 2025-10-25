@@ -27,7 +27,7 @@ In a separate terminal, clone this repository and start the tracklist search int
 ```bash
 git clone https://github.com/jaki95/whats-this-id.git
 cd whats-this-id
-uv run streamlit run src/whats_this_id/frontend/app.py
+make run
 ```
 
 The frontend will connect to the backend service to process your DJ sets and split them into individual tracks.
