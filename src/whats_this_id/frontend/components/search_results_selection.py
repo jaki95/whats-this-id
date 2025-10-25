@@ -36,10 +36,6 @@ def render_search_results_selection():
                 button_key = f"select_result_{i}_{hash(search_result.title)}"
                 if st.button("Select", key=button_key, type="primary"):
                     select_search_result(i)
-                    # Force a rerun by updating a session state variable
-                    st.session_state.force_rerun = not st.session_state.get(
-                        "force_rerun", False
-                    )
                     st.rerun()
 
             st.divider()
