@@ -19,10 +19,6 @@ def initialize_session_state():
         st.session_state.processing_job_id = None
     if "processing_status" not in st.session_state:
         st.session_state.processing_status = None
-    if "download_in_progress" not in st.session_state:
-        st.session_state.download_in_progress = False
-    if "downloaded_files" not in st.session_state:
-        st.session_state.downloaded_files = []
 
 
 def clear_processing_state():
@@ -33,9 +29,6 @@ def clear_processing_state():
 
 def clear_download_state():
     """Clear download-related session state."""
-    st.session_state.download_in_progress = False
-    st.session_state.downloaded_files = []
-
     # Clear any prepared download data
     keys_to_remove = []
     for key in st.session_state.keys():

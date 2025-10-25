@@ -2,15 +2,12 @@
 
 import streamlit as st
 
-from whats_this_id.core.search.trackid import TrackIDNetSearchStrategy
 from whats_this_id.frontend.components.processing_controls import (
     render_processing_controls,
 )
 from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
 from whats_this_id.frontend.config import AppConfig
-
-# TODO: Make this configurable
-search_strategy = TrackIDNetSearchStrategy()
+from whats_this_id.frontend.services import search_service
 
 
 def render_results_section():
@@ -26,7 +23,7 @@ def render_results_section():
                 selected_result = st.session_state.search_results[
                     st.session_state.selected_result_index
                 ]
-                tracklist, dj_set_url = search_strategy.get_tracklist(
+                tracklist, dj_set_url = search_service._strategy.get_tracklist(
                     selected_result.link
                 )
                 st.session_state.tracklist = tracklist
