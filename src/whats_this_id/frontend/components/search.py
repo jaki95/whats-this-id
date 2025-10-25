@@ -36,10 +36,12 @@ def render_search_section():
         _handle_search_action()
 
 
+# TODO: Make this configurable
+search_strategy = TrackIDNetSearchStrategy()
+
+
 def _handle_search_action():
     """Handle the search button action."""
-    # TODO: Make this configurable
-    search_strategy = TrackIDNetSearchStrategy()
     if not st.session_state.query_text.strip():
         st.warning("Please enter a search query.")
         return

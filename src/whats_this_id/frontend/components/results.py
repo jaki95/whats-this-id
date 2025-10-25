@@ -9,11 +9,12 @@ from whats_this_id.frontend.components.processing_controls import (
 from whats_this_id.frontend.components.tracklist_display import render_tracklist_display
 from whats_this_id.frontend.config import AppConfig
 
+# TODO: Make this configurable
+search_strategy = TrackIDNetSearchStrategy()
+
 
 def render_results_section():
     """Render the results section with tracklist and processing options."""
-    # TODO: Make this configurable
-    search_strategy = TrackIDNetSearchStrategy()
     # Only show if a result is selected
     if st.session_state.selected_result_index is None:
         return
