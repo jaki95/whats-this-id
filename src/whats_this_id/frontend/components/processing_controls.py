@@ -5,14 +5,14 @@ from dj_set_downloader.models.domain_tracklist import DomainTracklist
 
 from whats_this_id.frontend.components.download_section import render_download_section
 from whats_this_id.frontend.services.djset_processor import (
-    DJSetProcessorService,
+    FrontendDJSetProcessorService,
     display_api_error,
     djset_processor_service,
 )
 from whats_this_id.frontend.state import clear_processing_state
 
 
-def _check_service_health(api_service: DJSetProcessorService) -> bool:
+def _check_service_health(api_service: FrontendDJSetProcessorService) -> bool:
     """Check if the DJ set processor service is healthy and display status."""
     is_healthy, message = api_service.check_health()
 
@@ -25,7 +25,9 @@ def _check_service_health(api_service: DJSetProcessorService) -> bool:
 
 
 def _submit_processing_job(
-    dj_set_url: str, tracklist: DomainTracklist, api_service: DJSetProcessorService
+    dj_set_url: str,
+    tracklist: DomainTracklist,
+    api_service: FrontendDJSetProcessorService,
 ) -> bool:
     """Submit a new processing job if one isn't already active."""
     if st.session_state.processing_job_id:
@@ -43,7 +45,9 @@ def _submit_processing_job(
         return False
 
 
-def _handle_job_status_update(status, api_service: DJSetProcessorService) -> None:
+def _handle_job_status_update(
+    status, api_service: FrontendDJSetProcessorService
+) -> None:
     """Handle different job status states and render appropriate UI."""
     if status.status == "processing":
         # Show progress bar and cancel button
@@ -102,7 +106,7 @@ def progress_tracker():
         st.stop()  # Stop auto-refresh on error
 
 
-def _render_processing_status(status, api_service: DJSetProcessorService):
+def _render_processing_status(status, api_service: FrontendDJSetProcessorService):
     """Render the processing status with progress bar and cancel button."""
     progress_value = status.progress / 100.0
     st.progress(progress_value, text=f"{status.progress:.1f}% ({status.message})")

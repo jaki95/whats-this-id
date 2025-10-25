@@ -2,8 +2,8 @@
 
 import streamlit as st
 
+from whats_this_id.core.services import search_service
 from whats_this_id.frontend.config import AppConfig
-from whats_this_id.frontend.services import search_service
 from whats_this_id.frontend.state import update_search_results
 from whats_this_id.frontend.utils import (
     display_no_results_message,
