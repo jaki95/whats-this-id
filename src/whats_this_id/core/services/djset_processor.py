@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from http import HTTPStatus
 import logging
+from http import HTTPStatus
 from pathlib import Path
 
 from dj_set_downloader import (
