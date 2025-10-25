@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from pathlib import Path
-from typing import Optional
 
 from dj_set_downloader import (
     ApiClient,
@@ -109,7 +108,7 @@ class DJSetProcessorService:
         except Exception:
             return False
 
-    def download_all_tracks(self, job_id: str) -> Optional[tuple[bytearray, str]]:
+    def download_all_tracks(self, job_id: str) -> tuple[bytearray, str] | None:
         """Download all tracks as ZIP with proper error handling.
 
         Returns:

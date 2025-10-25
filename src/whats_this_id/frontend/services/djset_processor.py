@@ -1,6 +1,7 @@
 """Frontend wrapper for DJ set processor service with UI concerns."""
 
 import streamlit as st
+from dj_set_downloader import DomainTracklist, JobStatus, JobTracksInfoResponse
 
 from whats_this_id.core.services.djset_processor import DJSetProcessorService
 from whats_this_id.frontend.config import AppConfig
@@ -19,7 +20,7 @@ class FrontendDJSetProcessorService:
     def submit_processing_job(
         self,
         dj_set_url: str,
-        tracklist,
+        tracklist: DomainTracklist,
         file_extension: str = AppConfig.DEFAULT_FILE_EXTENSION,
         max_concurrent_tasks: int = AppConfig.DEFAULT_MAX_CONCURRENT_TASKS,
     ) -> tuple[bool, str, str | None]:
@@ -33,7 +34,7 @@ class FrontendDJSetProcessorService:
 
         return success, message, job_id
 
-    def get_job_status(self, job_id: str):
+    def get_job_status(self, job_id: str) -> JobStatus | None:
         """Get the status of a processing job with UI error handling."""
         try:
             return self._service.get_job_status(job_id)
@@ -48,14 +49,16 @@ class FrontendDJSetProcessorService:
             st.error("Error canceling job")
         return success
 
-    def download_all_tracks(self, job_id: str):
+    def download_all_tracks(self, job_id: str) -> tuple[bytearray, str] | None:
         """Download all tracks as ZIP with UI error handling."""
         result = self._service.download_all_tracks(job_id)
         if result is None:
             st.error("Error downloading tracks")
         return result
 
-    def download_single_track(self, job_id: str, track_number: int):
+    def download_single_track(
+        self, job_id: str, track_number: int
+    ) -> tuple[bytearray, str] | None:
         """Download a single track file with UI error handling."""
         result = self._service.download_single_track(
             job_id, track_number, AppConfig.DEFAULT_FILE_EXTENSION
@@ -64,7 +67,7 @@ class FrontendDJSetProcessorService:
             st.error(f"Error downloading track '{track_number}'")
         return result
 
-    def get_tracks_info(self, job_id: str):
+    def get_tracks_info(self, job_id: str) -> JobTracksInfoResponse | None:
         """Get detailed track information with UI error handling."""
         result = self._service.get_tracks_info(job_id)
         if result is None:

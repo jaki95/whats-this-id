@@ -1,5 +1,3 @@
-from typing import List
-
 from dj_set_downloader import DomainTrack, DomainTracklist
 from trackidnet import client
 
@@ -13,7 +11,7 @@ class TrackIDNetSearchStrategy(SearchStrategy):
     def __init__(self):
         self.trackidnet = client.TrackIDNet()
 
-    def search(self, query: str) -> List[SearchResult]:
+    def search(self, query: str) -> list[SearchResult]:
         result = self.trackidnet.search_tracklist(query)
         return [
             SearchResult(link=result.slug, title=result.name)
