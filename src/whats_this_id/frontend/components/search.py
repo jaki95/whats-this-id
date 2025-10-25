@@ -47,9 +47,7 @@ def _handle_search_action():
     with st.spinner(AppConfig.SEARCH_SPINNER_TEXT):
         try:
             # Run search and get multiple results
-            search_results = search_strategy.search(
-                st.session_state.query_text
-            )
+            search_results = search_strategy.search(st.session_state.query_text)
 
             if not search_results:
                 st.warning(

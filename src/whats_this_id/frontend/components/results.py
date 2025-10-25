@@ -25,7 +25,9 @@ def render_results_section():
                 selected_result = st.session_state.search_results[
                     st.session_state.selected_result_index
                 ]
-                tracklist, dj_set_url = search_strategy.get_tracklist(selected_result)
+                tracklist, dj_set_url = search_strategy.get_tracklist(
+                    selected_result.link
+                )
                 st.session_state.tracklist = tracklist
                 st.session_state.dj_set_url = dj_set_url
             except Exception as e:
