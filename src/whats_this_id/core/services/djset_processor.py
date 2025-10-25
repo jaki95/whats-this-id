@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from http import HTTPStatus
+import logging
 from pathlib import Path
 
 from dj_set_downloader import (
@@ -22,6 +23,8 @@ from dj_set_downloader import (
 ZIP_SIGNATURE_1 = b"PK\x03\x04"  # Standard ZIP file signature
 ZIP_SIGNATURE_2 = b"PK\x05\x06"  # Empty ZIP file signature
 MIN_ZIP_SIZE = 4  # Minimum bytes needed to validate ZIP signature
+
+logger = logging.getLogger(__name__)
 
 
 class DJSetProcessorService:
@@ -105,7 +108,8 @@ class DJSetProcessorService:
             if response.status_code != HTTPStatus.OK:
                 return False
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error canceling job: {e}")
             return False
 
     def download_all_tracks(self, job_id: str) -> tuple[bytearray, str] | None:
@@ -128,7 +132,8 @@ class DJSetProcessorService:
 
             return response.data, filename
 
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error downloading single track: {e}")
             return None
 
     def download_single_track(
@@ -149,7 +154,8 @@ class DJSetProcessorService:
             filename = f"track_{track_number}.{file_extension}"
             return response.data, filename
 
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error downloading single track: {e}")
             return None
 
     def get_tracks_info(self, job_id: str) -> JobTracksInfoResponse | None:
@@ -163,7 +169,8 @@ class DJSetProcessorService:
             if response.status_code != HTTPStatus.OK:
                 return None
             return response.data
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error getting tracks info: {e}")
             return None
 
     def _is_valid_zip_file(self, file_data: bytes | bytearray | None) -> bool:
