@@ -4,3 +4,5 @@ __pycache__/
 
 browser_cache/
 data/
+
+*.mp3
