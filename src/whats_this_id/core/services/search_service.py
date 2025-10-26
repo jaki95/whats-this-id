@@ -1,8 +1,8 @@
 """Search service for tracklist discovery."""
 
 from dj_set_downloader import DomainTracklist
-from trackidnet.client import SearchResult
 
+from whats_this_id.core.search.models import SearchResult
 from whats_this_id.core.search.strategy import SearchStrategy
 from whats_this_id.core.search.trackid import TrackIDNetSearchStrategy
 
