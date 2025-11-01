@@ -39,41 +39,50 @@ class TimingUtils:
     def apply_timing_rules(
         self,
         tracks: list[DomainTrack],
-        total_duration: str | None = None,
+        total_duration: timedelta,
+        intro_outro_threshold: timedelta = timedelta(seconds=30),
+        min_gap_threshold: timedelta = timedelta(seconds=60),
     ) -> list[DomainTrack]:
         """
         Apply timing rules to a list of tracks.
+
+        Args:
+            tracks: List of domain tracks to process.
+            total_duration: Total duration of the tracklist.
+            intro_outro_threshold: Threshold for adding intro/outro tracks.
+                If gap is <= threshold, extend the track; if > threshold, add ID track.
+                Defaults to 30 seconds.
+            min_gap_threshold: Minimum gap between tracks to insert an ID track.
+                Gaps <= this threshold will be adjusted to midpoint.
+                Defaults to 60 seconds.
+
+        Returns:
+            Processed list of tracks with timing rules applied.
         """
         if not tracks:
             return tracks
 
         logger.info(
-            f"Applying timing rules to {len(tracks)} tracks (total_duration={total_duration})"
+            f"Applying timing rules to {len(tracks)} tracks "
+            f"(total_duration={total_duration}, "
+            f"intro_outro_threshold={intro_outro_threshold}, "
+            f"min_gap_threshold={min_gap_threshold})"
         )
 
         # Sort and deduplicate
         tracks = sorted(tracks, key=lambda t: self.parse_time(t.start_time))
         tracks = self._deduplicate_tracks(tracks)
 
-        # Add intro "ID - ID" if needed
-        tracks = self._add_intro_track(tracks)
-
-        # Set missing end times
-        for i, track in enumerate(tracks):
-            if not track.end_time:
-                if i < len(tracks) - 1:
-                    track.end_time = tracks[i + 1].start_time
-                    logger.debug(f"Filled missing end_time for track {i + 1}")
-                elif total_duration:
-                    track.end_time = total_duration
-                    logger.debug("Filled last track end_time from total_duration")
+        # Add intro ID track if needed
+        tracks = self._add_intro_track(tracks, threshold=intro_outro_threshold)
 
         # Process gaps between tracks
-        tracks = self._process_gaps(tracks)
+        tracks = self._process_gaps(tracks, min_gap=min_gap_threshold)
 
-        # Add outro track if needed
-        if total_duration:
-            tracks = self._add_outro_track(tracks, total_duration)
+        # Add outro track if needed (handles missing end_time for last track)
+        tracks = self._add_outro_track(
+            tracks, total_duration, threshold=intro_outro_threshold
+        )
 
         # Renumber sequentially
         for i, track in enumerate(tracks, start=1):
@@ -128,38 +137,65 @@ class TimingUtils:
 
         return deduped
 
-    def _add_intro_track(self, tracks: list[DomainTrack]) -> list[DomainTrack]:
-        if not tracks or self.parse_time(tracks[0].start_time) == timedelta(seconds=0):
+    def _add_intro_track(
+        self, tracks: list[DomainTrack], threshold: timedelta = timedelta(seconds=30)
+    ) -> list[DomainTrack]:
+        """
+        Add an intro track if the first track starts after the threshold.
+        Otherwise, edit the first track to start at 00:00:00.
+        """
+        if not tracks or self.parse_time(tracks[0].start_time) < threshold:
+            tracks[0].start_time = self.format_time(timedelta(seconds=0))
             return tracks
 
-        first_start = self.parse_time(tracks[0].start_time)
-        if first_start > timedelta(seconds=0):
-            intro_track = DomainTrack(
-                track_number=None,
-                name="ID",
-                artist="ID",
-                start_time=self.format_time(timedelta(seconds=0)),
-                end_time=self.format_time(first_start),
-            )
-            tracks.insert(0, intro_track)
-            logger.debug(f"Inserted intro ID track: 00:00 -> {intro_track.end_time}")
-        return tracks
-
-    def _add_outro_track(self, tracks: list[DomainTrack], total_duration: str | None = None) -> list[DomainTrack]:
-        if not tracks or not total_duration:
-            return tracks
-        if not tracks[-1].end_time or self.parse_time(tracks[-1].end_time) == self.parse_time(total_duration):
-            return tracks
-            
-        outro_track = DomainTrack(
-            track_number=None,
+        intro_track = DomainTrack(
             name="ID",
             artist="ID",
-            start_time=self.format_time(self.parse_time(tracks[-1].end_time)),
-            end_time=self.format_time(self.parse_time(total_duration)),
+            start_time=self.format_time(timedelta(seconds=0)),
+            end_time=self.format_time(threshold),
+        )
+        tracks.insert(0, intro_track)
+        logger.debug(f"Inserted intro ID track: 00:00 -> {intro_track.end_time}")
+        return tracks
+
+    def _add_outro_track(
+        self,
+        tracks: list[DomainTrack],
+        total_duration: timedelta,
+        threshold: timedelta = timedelta(seconds=30),
+    ) -> list[DomainTrack]:
+        """
+        Add an outro track if the last track ends before the total duration
+        the difference is greater than the threshold.
+        Otherwise, edit the last track to end at the total duration.
+        Handles missing end_time for the last track by setting it to total_duration.
+        """
+        if not tracks:
+            return tracks
+
+        if not tracks[-1].end_time:
+            tracks[-1].end_time = self.format_time(total_duration)
+            logger.debug("Filled last track end_time from total_duration")
+            return tracks
+
+        last_end = self.parse_time(tracks[-1].end_time)
+        if last_end >= total_duration:
+            return tracks
+
+        if last_end + threshold >= total_duration:
+            tracks[-1].end_time = self.format_time(total_duration)
+            return tracks
+
+        outro_track = DomainTrack(
+            name="ID",
+            artist="ID",
+            start_time=self.format_time(last_end),
+            end_time=self.format_time(total_duration),
         )
         tracks.append(outro_track)
-        logger.debug(f"Inserted outro ID track: {outro_track.start_time} -> {outro_track.end_time}")
+        logger.debug(
+            f"Inserted outro ID track: {outro_track.start_time} -> {outro_track.end_time}"
+        )
         return tracks
 
     def _process_gaps(
@@ -167,6 +203,7 @@ class TimingUtils:
     ) -> list[DomainTrack]:
         """
         Process gaps between tracks.
+        Sets missing end_times for tracks based on the next track's start_time.
         If the gap is longer than min_gap, insert an ID track.
         If the gap is shorter than min_gap, adjust the previous
         end time and the next start time to the midpoint of the gap.
@@ -174,13 +211,19 @@ class TimingUtils:
         adjusted_tracks = []
 
         for i, track in enumerate(tracks):
-            start = self.parse_time(track.start_time)
-            end = self.parse_time(track.end_time) if track.end_time else start
+            # Set missing end_time
+            if not track.end_time and i < len(tracks) - 1:
+                track.end_time = tracks[i + 1].start_time
+                logger.debug(f"Filled missing end_time for track {i + 1}")
+
             adjusted_tracks.append(track)
 
             if i == len(tracks) - 1:
-                continue  # skip last, handled later
+                # Last track, no gap to process
+                continue
 
+            start = self.parse_time(track.start_time)
+            end = self.parse_time(track.end_time) if track.end_time else start
             next_track = tracks[i + 1]
             next_start = self.parse_time(next_track.start_time)
             gap = next_start - end

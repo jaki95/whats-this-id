@@ -32,8 +32,9 @@ class TrackIDNetSearchStrategy(SearchStrategy):
             for i, track in enumerate(result.tracks)
         ]
         tracklist = DomainTracklist(name=result.name, tracks=tracks, artist="unknown")
+        total_duration = timing_utils.parse_time(result.duration)
         tracklist.tracks = timing_utils.apply_timing_rules(
-            tracklist.tracks, result.duration
+            tracklist.tracks, total_duration
         )
         return tracklist, result.url
 
