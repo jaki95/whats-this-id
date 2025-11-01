@@ -152,7 +152,7 @@ class TimingUtils:
             name="ID",
             artist="ID",
             start_time=self.format_time(timedelta(seconds=0)),
-            end_time=self.format_time(threshold),
+            end_time=tracks[0].start_time,
         )
         tracks.insert(0, intro_track)
         logger.debug(f"Inserted intro ID track: 00:00 -> {intro_track.end_time}")

@@ -179,6 +179,21 @@ def test_deduplicate_tracks(input_tracks, expected_tracks):
                 ("00:00:30", "00:01:00", "Track 1", "Artist 1"),
             ],
         ),
+        # Track starting much later (e.g., 00:04:06) should get intro track filling entire gap
+        (
+            [
+                DomainTrack(
+                    name="Track 1",
+                    artist="Artist 1",
+                    start_time="00:04:06",
+                    end_time="00:06:10",
+                ),
+            ],
+            [
+                ("00:00:00", "00:04:06", "ID", "ID"),
+                ("00:04:06", "00:06:10", "Track 1", "Artist 1"),
+            ],
+        ),
         # Track starting at 00:00:00 should not get intro track
         (
             [
@@ -299,6 +314,23 @@ def test_process_gaps(input_tracks, expected_tracks):
             [
                 ("00:00:00", "00:01:00", "Track 1", "Artist 1"),
                 ("00:01:00", "00:02:00", "ID", "ID"),
+            ],
+        ),
+        # Track ending much earlier - outro track should fill entire large gap
+        (
+            [
+                DomainTrack(
+                    name="Track 1",
+                    artist="Artist 1",
+                    start_time="00:00:00",
+                    end_time="00:01:00",
+                ),
+            ],
+            "00:05:00",
+            timedelta(seconds=30),
+            [
+                ("00:00:00", "00:01:00", "Track 1", "Artist 1"),
+                ("00:01:00", "00:05:00", "ID", "ID"),
             ],
         ),
         # Track ending at 00:01:00 should not get outro track (no gap)
