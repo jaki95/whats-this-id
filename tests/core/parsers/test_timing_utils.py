@@ -259,3 +259,52 @@ def test_process_gaps(input_tracks, expected_tracks):
         assert result[i].end_time == expected_end
         assert result[i].name == expected_name
         assert result[i].artist == expected_artist
+
+@pytest.mark.parametrize(
+    "input_tracks,total_duration,expected_tracks",
+    [
+        # Track ending at 00:01:00 should get outro track
+        (
+            [
+                DomainTrack(
+                    name="Track 1",
+                    artist="Artist 1",
+                    start_time="00:00:00",
+                    end_time="00:01:00",
+                ),
+            ],
+            "00:02:00",
+            [
+                ("00:00:00", "00:01:00", "Track 1", "Artist 1"),
+                ("00:01:00", "00:02:00", "ID", "ID"),
+            ],
+        ),
+        # Track ending at 00:01:00 should not get outro track
+        (
+            [
+                DomainTrack(
+                    name="Track 1",
+                    artist="Artist 1",
+                    start_time="00:00:00",
+                    end_time="00:01:00",
+                ),
+            ],
+            "00:01:00",
+            [
+                ("00:00:00", "00:01:00", "Track 1", "Artist 1"),
+            ],
+        ),
+    ],
+)
+def test_add_outro_track(input_tracks, total_duration, expected_tracks):
+    timing_utils = TimingUtils()
+    result = timing_utils.apply_timing_rules(input_tracks, total_duration)
+
+    assert len(result) == len(expected_tracks)
+    for i, (expected_start, expected_end, expected_name, expected_artist) in enumerate(
+        expected_tracks
+    ):
+        assert result[i].start_time == expected_start
+        assert result[i].end_time == expected_end
+        assert result[i].name == expected_name
+        assert result[i].artist == expected_artist

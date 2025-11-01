@@ -71,6 +71,10 @@ class TimingUtils:
         # Process gaps between tracks
         tracks = self._process_gaps(tracks)
 
+        # Add outro track if needed
+        if total_duration:
+            tracks = self._add_outro_track(tracks, total_duration)
+
         # Renumber sequentially
         for i, track in enumerate(tracks, start=1):
             track.track_number = i
@@ -139,6 +143,23 @@ class TimingUtils:
             )
             tracks.insert(0, intro_track)
             logger.debug(f"Inserted intro ID track: 00:00 -> {intro_track.end_time}")
+        return tracks
+
+    def _add_outro_track(self, tracks: list[DomainTrack], total_duration: str | None = None) -> list[DomainTrack]:
+        if not tracks or not total_duration:
+            return tracks
+        if not tracks[-1].end_time or self.parse_time(tracks[-1].end_time) == self.parse_time(total_duration):
+            return tracks
+            
+        outro_track = DomainTrack(
+            track_number=None,
+            name="ID",
+            artist="ID",
+            start_time=self.format_time(self.parse_time(tracks[-1].end_time)),
+            end_time=self.format_time(self.parse_time(total_duration)),
+        )
+        tracks.append(outro_track)
+        logger.debug(f"Inserted outro ID track: {outro_track.start_time} -> {outro_track.end_time}")
         return tracks
 
     def _process_gaps(
