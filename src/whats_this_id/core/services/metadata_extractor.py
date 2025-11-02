@@ -42,8 +42,7 @@ class MetadataExtractor:
         ).with_structured_output(ExtractedMetadata)
 
     def extract(self, tracklist_title: str) -> ExtractedMetadata:
-        """Extract artist name and year from a DJ set title.
-        """
+        """Extract artist name and year from a DJ set title."""
         prompt = f"""Extract the artist name and year from this DJ set title:
 
 "{tracklist_title}"
@@ -73,7 +72,6 @@ Examples:
 
 
 def extract_metadata(tracklist_title: str) -> ExtractedMetadata:
-    """Extract metadata from a DJ set title.
-    """
+    """Extract metadata from a DJ set title."""
     extractor = MetadataExtractor()
     return extractor.extract(tracklist_title)
