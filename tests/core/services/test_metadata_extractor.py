@@ -68,7 +68,6 @@ class TestMetadataExtractor:
         monkeypatch.setenv("OPENAI_API_KEY", "test-key-123")
         extractor = MetadataExtractor()
         assert extractor.llm is not None
-        assert extractor.llm is not None
 
     def test_extract_calls_llm_correctly(
         self, monkeypatch: MonkeyPatch, mocker: MockerFixture
