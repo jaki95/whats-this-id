@@ -49,7 +49,7 @@ The frontend will connect to the backend service to process your DJ sets and spl
 ## Features
 
 - **Tracklist Search**: Search for DJ set tracklists and select the one you want to process
-- **AI Metadata Extraction**: Use OpenAI GPT-4o-mini to automatically extract artist names and years from DJ set titles
+- **AI Metadata Extraction**: Use an LLM to automatically extract artist names and years from DJ set titles
 - **Track Splitting**: Split DJ sets into individual tracks based on tracklist timings
 - **Download**: Download individual tracks or the full set as a ZIP file
 
